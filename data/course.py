@@ -48,7 +48,7 @@ class CoursesManager(ABC):
     async def init_courses(self):
         async with self.pool.acquire() as conn:
             conn : Connection
-            # await conn.execute("DROP TABLE IF EXISTS courses CASCADE;")
+            # await conn.execute("DROP TABLE IF EXISTS course_buttons CASCADE;")
 
             await conn.execute(""" CREATE TABLE IF NOT EXISTS courses (
                                id SERIAL PRIMARY KEY, 
@@ -146,7 +146,7 @@ class CoursesManager(ABC):
             await conn.execute(""" INSERT INTO course_buttons (name, course, type, new_line) VALUES ($1, $2, $3, $4);""", 
                                button.name, button.course, button.type, button.new_line)
             
-        await self.__courses_cache.delete("courses")
+        await self.__courses_cache.delete(f"cb{button.course}")
 
     async def get_course_button(self, id : int) -> CourseButton:
         async with self.pool.acquire() as conn:
@@ -155,9 +155,9 @@ class CoursesManager(ABC):
         if row:
             return CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'])
     
-    async def get_course_buttons(self, course_id : int) -> list[CourseButton]:
+    async def get_course_buttons(self, course_id : int, use_cache: bool = True) -> list[CourseButton]:
         buttons = await self.__courses_cache.get(f'cb{course_id}')
-        if buttons:
+        if buttons and use_cache:
             return buttons
         
         async with self.pool.acquire() as conn:

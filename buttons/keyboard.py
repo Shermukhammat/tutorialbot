@@ -68,7 +68,7 @@ class KeyboardManger:
         for course_button in course_buttons:
             buttons.add(KeyboardButton(text=course_button.name), new_line = course_button.new_line)
 
-        buttons.add(KeyboardButton(text = "➕ Test"), new_line = True)
+        buttons.add(KeyboardButton(text = "➕ Test blok"), new_line = True)
         buttons.add(KeyboardButton(text = "➕ Media"))
         buttons.add(KeyboardButton(text = "➕ Menu"))
         buttons.add(KeyboardButton(text = "⬅️ Orqaga"), new_line = True)

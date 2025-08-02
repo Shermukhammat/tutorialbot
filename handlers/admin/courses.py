@@ -1,10 +1,10 @@
 from aiogram import Router, Dispatcher, types, F
-from states import AdminPanel, AdminCourseMneu
+from states import AdminPanel, AdminCourseMneu, AdminCourseButton
 from loader import db, dp
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
 from asyncio import Semaphore
-from data import Course
+from data import Course, CourseButtonType
 from utils.mytime import can_edit
 from .main import r, sema, back_to_course_menu
 from aiogram.types import ContentType
@@ -132,17 +132,20 @@ async def course_menu(update : types.Message, state: FSMContext):
         await state.set_state(AdminPanel.main)
         await update.answer("🎛 Admin panel", reply_markup=KeyboardManger.panel(await db.get_courses()))
     
-    # elif update.text == "➕ Test":
-    #     await state.set_state(AdminPanel.add_course_button)
-    #     await update.answer("✍️ Test nomini kirting", reply_markup=KeyboardManger.back())
+    elif update.text == "➕ Test blok":
+        await state.set_state(AdminCourseButton.add)
+        await state.update_data(type = CourseButtonType.TEST)
+        await update.answer("📦 Test bolgi nomini kirting", reply_markup=KeyboardManger.back())
 
-    # elif update.text == "➕ Media":
-    #     await state.set_state(AdminPanel.add_course_button)
-    #     await update.answer("✍️ Media nomini kirting", reply_markup=KeyboardManger.back())
+    elif update.text == "➕ Media":
+        await state.set_state(AdminCourseButton.add)
+        await state.update_data(type = CourseButtonType.MEDIA)
+        await update.answer("📁 Media tugmasi nomini kirting", reply_markup=KeyboardManger.back())
 
-    # elif update.text == "➕ Menu":
-    #     await state.set_state(AdminPanel.add_course_button)
-    #     await update.answer("✍️ Menyu nomini kirting", reply_markup=KeyboardManger.back())
+    elif update.text == "➕ Menu":
+        await state.set_state(AdminCourseButton.add)
+        await state.update_data(type = CourseButtonType.INNER_MENU)
+        await update.answer("🎛 Menyu tugmasi nomini kirting", reply_markup=KeyboardManger.back())
 
     else:
         data = await state.get_data()

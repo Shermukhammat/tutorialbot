@@ -1,1 +1,1 @@
-from . import main, courses
+from . import main, courses, course_buttons
