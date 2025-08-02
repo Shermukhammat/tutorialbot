@@ -8,7 +8,7 @@ class Course:
     def __init__(self, id: int = None, 
                  name: str = None, 
                  new_line: bool = False,
-                 pro: bool = False,
+                 pro: bool = True,
                  message: int = None):
         self.id = id
         self.name = name
@@ -18,6 +18,25 @@ class Course:
 
     def __str__(self):
         return f"Course(id={self.id}, name={self.name}, new_line={self.new_line}, pro={self.pro}, message={self.message})"
+
+
+class CourseButtonType:
+    TEST = 'test'
+    MEDIA = 'media'
+    INNER_MENU = 'inner_menu'
+
+
+
+class CourseButton:
+    def __init__(self, id: int = None, name: str = None, course: int = None, type: str = None, new_line: bool = False):
+        self.id = id
+        self.name = name
+        self.course = course
+        self.type = type
+        self.new_line = new_line
+
+    def __str__(self):
+        return f"CourseButton(id={self.id}, name={self.name}, course={self.course}, type={self.type})"
 
 
 
@@ -42,6 +61,7 @@ class CoursesManager(ABC):
                                id SERIAL PRIMARY KEY, 
                                name TEXT,
                                course INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+                               new_line BOOLEAN NOT NULL DEFAULT FALSE,
                                type TEXT
                                );""")
             await conn.execute(""" CREATE TABLE IF NOT EXISTS tests (
@@ -82,6 +102,9 @@ class CoursesManager(ABC):
                 await conn.execute(""" DELETE FROM courses WHERE name = $1;""", name)
             else:
                 raise ValueError("id or name must be provided")
+        
+        await self.__courses_cache.delete(f"cb{id}")
+        await self.__courses_cache.delete("courses")
 
     async def update_course(self, id : int, **kwargs):
         async with self.pool.acquire() as conn:
@@ -89,31 +112,78 @@ class CoursesManager(ABC):
             for key, value in kwargs.items():
                 await conn.execute(f""" UPDATE courses SET {key} = $1 WHERE id = $2""", value, id)
 
+        await self.__courses_cache.delete('courses')
+        await self.__courses_cache.delete(f"cb{id}")
+
     async def add_course(self, course : Course) -> int:
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO courses (name, new_line, pro, message) VALUES ($1, $2);""", 
+            await conn.execute(""" INSERT INTO courses (name, new_line, pro, message) VALUES ($1, $2, $3, $4);""", 
                                course.name, course.new_line, course.pro, course.message)
         
+        await self.__courses_cache.delete("courses")
+
         course = await self.get_course(name=course.name)
         if course:
             return course.id
 
-    async def get_courses(self) -> list[Course]:
+    async def get_courses(self, use_cache : bool = True) -> list[Course]:
         courses = await self.__courses_cache.get('courses')
-        if courses:
+        if courses and use_cache:
             return courses
         async with self.pool.acquire() as conn:
             conn : Connection
-            rows = await conn.fetch(""" SELECT * FROM courses;""")
+            rows = await conn.fetch(""" SELECT * FROM courses ORDER BY id DESC;""")
         
         courses = [Course(id=row['id'], name=row['name'], new_line=row['new_line'], pro=row['pro'], message=row['message']) for row in rows]
         await self.__courses_cache.set('courses', courses)
         return courses
 
 
+    async def add_course_button(self, button : CourseButton):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" INSERT INTO course_buttons (name, course, type, new_line) VALUES ($1, $2, $3, $4);""", 
+                               button.name, button.course, button.type, button.new_line)
+            
+        await self.__courses_cache.delete("courses")
 
+    async def get_course_button(self, id : int) -> CourseButton:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            row = await conn.fetchrow(""" SELECT * FROM course_buttons WHERE id = $1;""", id)
+        if row:
+            return CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'])
     
+    async def get_course_buttons(self, course_id : int) -> list[CourseButton]:
+        buttons = await self.__courses_cache.get(f'cb{course_id}')
+        if buttons:
+            return buttons
+        
+        async with self.pool.acquire() as conn:
+            conn: Connection
+            rows = await conn.fetch(""" SELECT * FROM course_buttons WHERE course = $1;""", course_id)
+            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line']) for row in rows]
+            await self.__courses_cache.set(f'cb{course_id}', buttons)
+        return buttons
+    
+    async def delete_course_button(self, id : int):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" DELETE FROM course_buttons WHERE id = $1;""", id)
+
+        await self.__courses_cache.delete(f"cb{id}")
+        await self.__courses_cache.delete("courses")
+
+    async def update_course_button(self, id : int = None, **kwargs):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            for key, value in kwargs.items():
+                await conn.execute(f""" UPDATE course_buttons SET {key} = $1 WHERE id = $2""", value, id)
+
+        
+        await self.__courses_cache.delete(f"cb{id}")
+        await self.__courses_cache.delete("courses")
                 
 
 async def main():

@@ -3,7 +3,8 @@ from aiogram import types
 from data import User, UserStatus
 from aiogram.filters import Command, CommandStart
 from buttons import KeyboardManger
-
+from aiogram.fsm.context import FSMContext
+from states import AdminPanel
 
 
 @dp.message(CommandStart())
@@ -43,9 +44,9 @@ async def exit_command(update: types.Message):
             ], types.BotCommandScopeChat(chat_id = update.chat.id))
 
 @dp.message(Command('admin'))
-async def admin_command(update: types.Message, user: User):
+async def admin_command(update: types.Message, user: User, state: FSMContext):
     if user.is_admin:
-        KeyboardManger.home
+        await state.set_state(state = AdminPanel.main)
         await update.answer("🎛 Admin panel",
                             reply_markup = KeyboardManger.panel(await db.get_courses()))
     
@@ -62,12 +63,13 @@ async def admin_command(update: types.Message, user: User):
 
 @dp.message(Command('commands'))
 async def admin_command(update: types.Message, user: User):
-    if user.id == db.DEV_ID: 
+    if user.id == db.DEV_ID:
         await bot.set_my_commands([
             types.BotCommand(command = 'help', description = '📖 Yordam'),
             types.BotCommand(command = 'buy', description = '💎 Kurs sotib olish')
             ])
+        await update.answer("Bot komandalari yangilandi")
 
-@dp.message()
-async def main_handler(update: types.Message, user: User):
-    await update.answer("Bosh menu", reply_markup=KeyboardManger.home(await db.get_courses()))
+# @dp.message()
+# async def main_handler(update: types.Message, user: User):
+#     await update.answer("Bosh menu", reply_markup=KeyboardManger.home(await db.get_courses()))
