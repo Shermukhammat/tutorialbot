@@ -62,6 +62,12 @@ class KeyboardManger:
             [KeyboardButton(text = "⬅️ Orqaga")]
         ], resize_keyboard=True)
     
+    def time_button() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text = "♾️ Vaxt belgilanmasin")],
+            [KeyboardButton(text = "⬅️ Orqaga")]
+        ], resize_keyboard=True)
+    
     def make_quiz() -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text="Test tuzish", request_poll=KeyboardButtonPollType(type='quiz'))],
@@ -75,11 +81,18 @@ class KeyboardManger:
 
         buttons.add(KeyboardButton(text = "➕ Test blok"), new_line = True)
         buttons.add(KeyboardButton(text = "➕ Media"))
-        buttons.add(KeyboardButton(text = "➕ Menu"))
+        # buttons.add(KeyboardButton(text = "➕ Menu"))
+        buttons.add(KeyboardButton(text = "👥 Foydalanuvchilar"), new_line = True)
+        # buttons.add(KeyboardButton(text=""))
         buttons.add(KeyboardButton(text = "⬅️ Orqaga"), new_line = True)
         return buttons.reply_markup
     
 
+    def yes_or_no() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="✅ Xa"), KeyboardButton(text="❌ Yo'q")],
+            [KeyboardButton(text = "⬅️ Orqaga")]
+        ], resize_keyboard=True)
     def yes1():
         buttons = [KeyboardButton(text="Xa"), 
                    KeyboardButton(text="Yo'q"), 
@@ -106,8 +119,10 @@ class KeyboardManger:
             keyboard=[
                 [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
                 [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
-                [KeyboardButton(text="🗑 O'chirish")] + [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else [],
+                [KeyboardButton(text=f"⏳ Vaxt: {button.display_time}"), KeyboardButton(text= "✅ Testlarni arlashtir" if button.mix_tests else "❌ Testlarni arlashtir")],
+                [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
+                [KeyboardButton(text="🗑 O'chirish")],
                 [KeyboardButton(text="⬅️ Orqaga")]
             ]
-        
+            keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
             return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)

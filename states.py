@@ -36,4 +36,8 @@ class AdminCourseButton(StatesGroup):
 class AdminTestBlock(StatesGroup):
     main = State()
     get_test = State()
-    confirm_test = State()
+    edit_test = State()
+
+    edit_name = State()
+    edit_time = State()
+    delete = State()

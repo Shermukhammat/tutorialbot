@@ -28,17 +28,31 @@ class CourseButtonType:
 
 
 class CourseButton:
-    def __init__(self, id: int = None, name: str = None, course: int = None, type: str = None, new_line: bool = False, open: bool = False):
+    def __init__(self, id: int = None, 
+                 name: str = None, 
+                 course: int = None, 
+                 type: str = None, 
+                 new_line: bool = False, 
+                 open: bool = False,
+                 mix_tests: bool = False,
+                 mix_options: bool = False,
+                 time: int = None):
         self.id = id
         self.name = name
         self.course = course
         self.type = type
         self.new_line = new_line
         self.open = open
+        self.mix_tests = mix_tests
+        self.mix_options = mix_options
+        self.time = time
 
     def __str__(self):
         return f"CourseButton(id={self.id}, name={self.name}, course={self.course}, type={self.type})"
 
+    @property
+    def display_time(self) -> str:
+        return str(self.time) if self.time else '♾️'
 
 class Test:
     def __init__(self, id: int = None, courses_button: int = None, question: str = None, media: int = None, options: list[str] = None, info: str = None):
@@ -80,8 +94,14 @@ class CoursesManager(ABC):
                                course INTEGER REFERENCES courses(id) ON DELETE CASCADE,
                                new_line BOOLEAN NOT NULL DEFAULT FALSE,
                                type TEXT,
-                               open BOOLEAN NOT NULL DEFAULT FALSE
+                               open BOOLEAN NOT NULL DEFAULT FALSE,
+                               mix_tests BOOLEAN NOT NULL DEFAULT FALSE,
+                               mix_options BOOLEAN NOT NULL DEFAULT FALSE,
+                               time INTEGER
                                );""")
+            # await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS mix_tests BOOLEAN NOT NULL DEFAULT FALSE;")
+            # await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS mix_options BOOLEAN NOT NULL DEFAULT FALSE;")
+            # await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS time INTEGER;")
             await conn.execute(""" CREATE TABLE IF NOT EXISTS tests (
                                id SERIAL PRIMARY KEY,
                                courses_button INTEGER REFERENCES course_buttons(id) ON DELETE CASCADE, 
@@ -178,7 +198,15 @@ class CoursesManager(ABC):
                 raise ValueError("name and course_id or id  must be provided")
 
         if row:
-            return CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open'])
+            return CourseButton(id=row['id'], 
+                                name=row['name'], 
+                                course=row['course'], 
+                                type=row['type'], 
+                                new_line=row['new_line'], 
+                                open=row['open'],
+                                mix_tests=row['mix_tests'],
+                                mix_options=row['mix_options'],
+                                time=row['time'])
     
     async def get_course_buttons(self, course_id : int, use_cache: bool = True) -> list[CourseButton]:
         buttons = await self.__courses_cache.get(f'cb{course_id}')
@@ -187,17 +215,19 @@ class CoursesManager(ABC):
         
         async with self.pool.acquire() as conn:
             conn: Connection
-            rows = await conn.fetch(""" SELECT * FROM course_buttons WHERE course = $1;""", course_id)
-            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open']) for row in rows]
+            rows = await conn.fetch(""" SELECT * FROM course_buttons WHERE course = $1 ORDER BY id;""", course_id)
+            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open'], mix_tests=row['mix_tests'], mix_options=row['mix_options'], time=row['time']) for row in rows]
             await self.__courses_cache.set(f'cb{course_id}', buttons)
         return buttons
     
     async def delete_course_button(self, id : int):
+        bt = await self.get_course_button(id = id) 
         async with self.pool.acquire() as conn:
             conn : Connection
             await conn.execute(""" DELETE FROM course_buttons WHERE id = $1;""", id)
 
-        await self.__courses_cache.delete(f"cb{id}")
+        if bt:   
+            await self.__courses_cache.delete(f"cb{bt.course}")
         await self.__courses_cache.delete("courses")
 
     async def update_course_button(self, id : int = None, **kwargs):
@@ -206,8 +236,9 @@ class CoursesManager(ABC):
             for key, value in kwargs.items():
                 await conn.execute(f""" UPDATE course_buttons SET {key} = $1 WHERE id = $2""", value, id)
 
-        
-        await self.__courses_cache.delete(f"cb{id}")
+        bt = await self.get_course_button(id = id) 
+        if bt:   
+            await self.__courses_cache.delete(f"cb{bt.course}")
         await self.__courses_cache.delete("courses")
                 
 
