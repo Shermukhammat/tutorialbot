@@ -28,16 +28,33 @@ class CourseButtonType:
 
 
 class CourseButton:
-    def __init__(self, id: int = None, name: str = None, course: int = None, type: str = None, new_line: bool = False):
+    def __init__(self, id: int = None, name: str = None, course: int = None, type: str = None, new_line: bool = False, open: bool = False):
         self.id = id
         self.name = name
         self.course = course
         self.type = type
         self.new_line = new_line
+        self.open = open
 
     def __str__(self):
         return f"CourseButton(id={self.id}, name={self.name}, course={self.course}, type={self.type})"
 
+
+class Test:
+    def __init__(self, id: int = None, courses_button: int = None, question: str = None, media: int = None, options: list[str] = None, info: str = None):
+        self.id = id
+        self.courses_button = courses_button
+        self.question = question
+        self.media = media
+        self.options = options
+        self.info = info
+    
+    @property
+    def safe_question(self) -> str:
+        limit = 255 - 15
+        if len(self.question) > limit:
+            return self.question[:limit] + '...'
+        return self.question
 
 
 class CoursesManager(ABC):
@@ -48,7 +65,7 @@ class CoursesManager(ABC):
     async def init_courses(self):
         async with self.pool.acquire() as conn:
             conn : Connection
-            # await conn.execute("DROP TABLE IF EXISTS course_buttons CASCADE;")
+            # await conn.execute("DROP TABLE IF EXISTS tests CASCADE;")
 
             await conn.execute(""" CREATE TABLE IF NOT EXISTS courses (
                                id SERIAL PRIMARY KEY, 
@@ -62,14 +79,16 @@ class CoursesManager(ABC):
                                name TEXT,
                                course INTEGER REFERENCES courses(id) ON DELETE CASCADE,
                                new_line BOOLEAN NOT NULL DEFAULT FALSE,
-                               type TEXT
+                               type TEXT,
+                               open BOOLEAN NOT NULL DEFAULT FALSE
                                );""")
             await conn.execute(""" CREATE TABLE IF NOT EXISTS tests (
                                id SERIAL PRIMARY KEY,
                                courses_button INTEGER REFERENCES course_buttons(id) ON DELETE CASCADE, 
                                question TEXT,
                                media INTEGER,
-                               options TEXT[]
+                               options TEXT[],
+                               info TEXT
                                ); """)
             await conn.execute(""" CREATE TABLE IF NOT EXISTS lessons (
                                id SERIAL PRIMARY KEY,
@@ -143,17 +162,23 @@ class CoursesManager(ABC):
     async def add_course_button(self, button : CourseButton):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO course_buttons (name, course, type, new_line) VALUES ($1, $2, $3, $4);""", 
-                               button.name, button.course, button.type, button.new_line)
+            await conn.execute(""" INSERT INTO course_buttons (name, course, type, new_line, open) VALUES ($1, $2, $3, $4, $5);""", 
+                               button.name, button.course, button.type, button.new_line, button.open)
             
         await self.__courses_cache.delete(f"cb{button.course}")
 
-    async def get_course_button(self, id : int) -> CourseButton:
+    async def get_course_button(self, course_id : int = None, name: str = None, id : int = None) -> CourseButton:
         async with self.pool.acquire() as conn:
             conn : Connection
-            row = await conn.fetchrow(""" SELECT * FROM course_buttons WHERE id = $1;""", id)
+            if name:
+                row = await conn.fetchrow(""" SELECT * FROM course_buttons WHERE course = $1 AND name = $2;""", course_id, name)
+            elif id:
+                row = await conn.fetchrow(""" SELECT * FROM course_buttons WHERE id = $1;""", id)
+            else:
+                raise ValueError("name and course_id or id  must be provided")
+
         if row:
-            return CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'])
+            return CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open'])
     
     async def get_course_buttons(self, course_id : int, use_cache: bool = True) -> list[CourseButton]:
         buttons = await self.__courses_cache.get(f'cb{course_id}')
@@ -163,7 +188,7 @@ class CoursesManager(ABC):
         async with self.pool.acquire() as conn:
             conn: Connection
             rows = await conn.fetch(""" SELECT * FROM course_buttons WHERE course = $1;""", course_id)
-            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line']) for row in rows]
+            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open']) for row in rows]
             await self.__courses_cache.set(f'cb{course_id}', buttons)
         return buttons
     
@@ -185,6 +210,39 @@ class CoursesManager(ABC):
         await self.__courses_cache.delete(f"cb{id}")
         await self.__courses_cache.delete("courses")
                 
+
+    async def get_test(self, id : int) -> Test:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            row = await conn.fetchrow(""" SELECT * FROM tests WHERE id = $1;""", id)
+        
+        if row:
+            return Test(id=row['id'], courses_button=row['courses_button'], question=row['question'], media=row['media'], options=row['options'], info=row['info'])
+
+    async def add_test(self, test : Test):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" INSERT INTO tests (courses_button, question, media, options, info) VALUES ($1, $2, $3, $4, $5);""", 
+                               test.courses_button, test.question, test.media, test.options, test.info)
+        
+    async def get_tests(self, course_button_id : int = None) -> list[Test]:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            rows = await conn.fetch(""" SELECT * FROM tests WHERE courses_button = $1;""", course_button_id)
+        
+        return [Test(id=row['id'], courses_button=row['courses_button'], question=row['question'], media=row['media'], options=row['options'], info=row['info']) for row in rows]
+
+    async def delete_test(self, id: int):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" DELETE FROM tests WHERE id = $1;""", id)
+
+    async def update_test(self, id: int, **kwargs):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            for key, value in kwargs.items():
+                await conn.execute(f""" UPDATE tests SET {key} = $1 WHERE id = $2""", value, id)
+
 
 async def main():
     class Tetser(CoursesManager):

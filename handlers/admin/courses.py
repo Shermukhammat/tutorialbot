@@ -1,5 +1,5 @@
 from aiogram import Router, Dispatcher, types, F
-from states import AdminPanel, AdminCourseMneu, AdminCourseButton
+from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock
 from loader import db, dp
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
@@ -150,8 +150,22 @@ async def course_menu(update : types.Message, state: FSMContext):
     else:
         data = await state.get_data()
         course_id = data.get('course_id')
-        replay_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course_id))
-        await update.answer("❗️ Nomalum buyruq", reply_markup = replay_markup)
+        course = await db.get_course(id = course_id)
+        button = await db.get_course_button(course_id = course_id, name = update.text)
+
+        if button:
+            if button.type == CourseButtonType.TEST:
+                await state.set_state(AdminTestBlock.main)
+                await state.update_data(button_id = button.id)
+                await update.answer(f"Test blog: {button.name}", reply_markup=KeyboardManger.edit_course_button(button, pro=course.pro))
+                
+            elif button.type == CourseButtonType.MEDIA:
+                await update.answer(f"Media: {button.name}")
+            elif button.type == CourseButtonType.INNER_MENU:
+                await update.answer(f"Menyu: {button.name}")
+        else:
+            replay_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course_id))
+            await update.answer("❗️ Nomalum buyruq", reply_markup = replay_markup)
 
 
 

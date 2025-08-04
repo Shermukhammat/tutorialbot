@@ -31,3 +31,9 @@ class AdminCourseButton(StatesGroup):
 
     delete1 = State()
     delete2 = State()
+
+
+class AdminTestBlock(StatesGroup):
+    main = State()
+    get_test = State()
+    confirm_test = State()

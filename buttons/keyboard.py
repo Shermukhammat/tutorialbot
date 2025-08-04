@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, KeyboardButtonPollType
 from data import Course, CourseButton, CourseButtonType
 import random
 
@@ -62,6 +62,11 @@ class KeyboardManger:
             [KeyboardButton(text = "⬅️ Orqaga")]
         ], resize_keyboard=True)
     
+    def make_quiz() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="Test tuzish", request_poll=KeyboardButtonPollType(type='quiz'))],
+            [KeyboardButton(text = "⬅️ Orqaga")]
+        ], resize_keyboard=True)
 
     def course_admin_menu(course_buttons: list[CourseButton]) -> ReplyKeyboardMarkup:
         buttons = AutoButtons()
@@ -96,3 +101,13 @@ class KeyboardManger:
         keyboard.append([KeyboardButton(text="⬅️ Orqaga")])
         return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True) 
     
+    def edit_course_button(button: CourseButton, pro : bool = False) -> ReplyKeyboardMarkup:
+        if button.type == CourseButtonType.TEST:
+            keyboard=[
+                [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
+                [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
+                [KeyboardButton(text="🗑 O'chirish")] + [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else [],
+                [KeyboardButton(text="⬅️ Orqaga")]
+            ]
+        
+            return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
