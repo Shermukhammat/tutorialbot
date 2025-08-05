@@ -101,6 +101,17 @@ class UsersDB:
         if user:
             await self.users_cache.set(id, user)
 
+    async def get_users(self) -> list[User]:
+        async with self.pool.acquire() as conn:
+            conn : Pool
+            rows = await conn.fetch("""SELECT * FROM users;""")
+        return [User(id = row['id'], 
+                    registered = row['registered'], 
+                    status = row['status'], 
+                    fullname = row['fullname'], 
+                    lang = row['lang'], 
+                    is_admin=row['is_admin']) for row in rows]
+
     async def get_useres(self) -> list[User]:
         async with self.pool.acquire() as conn:
             conn : Pool

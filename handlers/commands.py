@@ -10,7 +10,7 @@ from asyncio import Semaphore, sleep
 
 sema = Semaphore()
 
-@dp.message(CommandStart())
+@dp.message(Command(commands=['start', 'restart']))
 async def start_command(update: types.Message, user: User, command: CommandObject, state: FSMContext):
     if await state.get_state():
         await state.clear()
@@ -88,20 +88,32 @@ async def admin_command(update: types.Message, user: User, state: FSMContext):
         await update.answer("Dasturchi siz endi adminsiz")
 
         await bot.set_my_commands([
-            types.BotCommand(command = 'help', description = '📖 Yordam'),
-            types.BotCommand(command = 'buy', description = '💎 Kurs sotib olish'),
             types.BotCommand(command = 'admin', description = '👮🏻‍♂️ Admin panel'),
-            types.BotCommand(command = 'stats', description = '📊 Bot statistikasi')
+            types.BotCommand(command = 'stats', description = '📊 Bot statistikasi'),
+            types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
+            types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
+            types.BotCommand(command = 'help', description = '📖 Yordam')
             ], types.BotCommandScopeChat(chat_id = update.chat.id))
 
 @dp.message(Command('commands'))
 async def admin_command(update: types.Message, user: User):
     if user.id == db.DEV_ID:
         await bot.set_my_commands([
-            types.BotCommand(command = 'help', description = '📖 Yordam'),
-            types.BotCommand(command = 'buy', description = '💎 Kurs sotib olish')
+            types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
+            types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
+            types.BotCommand(command = 'help', description = '📖 Yordam')
             ])
         await update.answer("Bot komandalari yangilandi")
+
+    for user in await db.get_users():
+        if user.is_admin:
+            await bot.set_my_commands([
+            types.BotCommand(command = 'admin', description = '👮🏻‍♂️ Admin panel'),
+            types.BotCommand(command = 'stats', description = '📊 Bot statistikasi'),
+            types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
+            types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
+            types.BotCommand(command = 'help', description = '📖 Yordam')
+            ], types.BotCommandScopeChat(chat_id = user.id))
 
 # @dp.message()
 # async def main_handler(update: types.Message, user: User):
