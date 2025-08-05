@@ -131,14 +131,14 @@ class CoursesManager(ABC):
                                courses_button INTEGER REFERENCES course_buttons(id) ON DELETE CASCADE,
                                media INTEGER[]
                                );""")
-            await conn.execute(""" CREATE TABLE IF NOT EXISTS subscritpion (
+            await conn.execute(""" CREATE TABLE IF NOT EXISTS subscribtions (
                                id SERIAL PRIMARY KEY,
                                user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
                                course INTEGER REFERENCES courses(id) ON DELETE CASCADE,
                                token TEXT
                                );
                                """)
-            await conn.execute(""" ALTER TABLE subscritpion ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();""")
+            await conn.execute(""" ALTER TABLE subscribtions ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();""")
             
 
     async def get_course(self, id : int = None, name : str = None) -> Course:
@@ -303,11 +303,11 @@ class CoursesManager(ABC):
         async with self.pool.acquire() as conn:
             conn : Connection
             if id:
-                row = await conn.fetchrow(""" SELECT * FROM subscritpion WHERE id = $1;""", id)
+                row = await conn.fetchrow(""" SELECT * FROM subscribtions WHERE id = $1;""", id)
             elif token:
-                row = await conn.fetchrow(""" SELECT * FROM subscritpion WHERE token = $1;""", token)
+                row = await conn.fetchrow(""" SELECT * FROM subscribtions WHERE token = $1;""", token)
             elif user_id and course:
-                row = await conn.fetchrow(""" SELECT * FROM subscritpion WHERE user_id = $1 AND course = $2;""", user_id, course)
+                row = await conn.fetchrow(""" SELECT * FROM subscribtions WHERE user_id = $1 AND course = $2;""", user_id, course)
             else:
                 raise ValueError("id or token or user_id and course must be provided")
 
@@ -317,24 +317,24 @@ class CoursesManager(ABC):
     async def get_subscribtions(self, user_id: int) -> list[Subscription]:
         async with self.pool.acquire() as conn:
             conn : Connection
-            rows = await conn.fetch(""" SELECT * FROM subscritpion WHERE user_id = $1;""", user_id)
+            rows = await conn.fetch(""" SELECT * FROM subscribtions WHERE user_id = $1;""", user_id)
         return [Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course'], created_at=row['created_at']) for row in rows]
 
     async def add_subscribtion(self, subscribtion : Subscription):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO subscritpion (user_id, token, course) VALUES ($1, $2, $3, $4);""", subscribtion.user_id, subscribtion.token, subscribtion.course, subscribtion.created_at)
+            await conn.execute(""" INSERT INTO subscribtions (user_id, token, course, created_at) VALUES ($1, $2, $3, $4);""", subscribtion.user_id, subscribtion.token, subscribtion.course, subscribtion.created_at)
 
     async def delete_subscribtion(self, id : int):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" DELETE FROM subscritpion WHERE id = $1;""", id)
+            await conn.execute(""" DELETE FROM subscribtions WHERE id = $1;""", id)
     
     async def update_subscribtion(self, id: int, **kwargs):
         async with self.pool.acquire() as conn:
             conn : Connection
             for key, value in kwargs.items():
-                await conn.execute(f""" UPDATE subscritpion SET {key} = $1 WHERE id = $2""", value, id)
+                await conn.execute(f""" UPDATE subscribtions SET {key} = $1 WHERE id = $2""", value, id)
 
 
 

@@ -86,9 +86,11 @@ class KeyboardManger:
 
         buttons.add(KeyboardButton(text = "➕ Test blok"), new_line = True)
         buttons.add(KeyboardButton(text = "➕ Media"))
-        # buttons.add(KeyboardButton(text = "➕ Menu"))
-        buttons.add(KeyboardButton(text = "🎓 Foydalnuvchi qo'shish"), new_line = True)
-        # buttons.add(KeyboardButton(text=""))
+        buttons.add(KeyboardButton(text = "➕ Foydalnuvchi"))
+
+        buttons.add(KeyboardButton(text="🎓 Foydalnuvchilar"), new_line=True)
+        buttons.add(KeyboardButton(text = "🧹 Foydalnuvchilarni tozlash"))
+        
         buttons.add(KeyboardButton(text = "⬅️ Orqaga"), new_line = True)
         return buttons.reply_markup
     

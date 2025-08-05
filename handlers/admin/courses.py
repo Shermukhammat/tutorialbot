@@ -148,7 +148,7 @@ async def course_menu(update : types.Message, state: FSMContext):
         await state.update_data(type = CourseButtonType.INNER_MENU)
         await update.answer("🎛 Menyu tugmasi nomini kirting", reply_markup=KeyboardManger.back())
 
-    elif update.text == "🎓 Foydalnuvchi qo'shish":
+    elif update.text == "➕ Foydalnuvchi":
         async with sema:
             data = await state.get_data()
             course = await db.get_course(data.get('course_id'))
@@ -164,6 +164,13 @@ async def course_menu(update : types.Message, state: FSMContext):
                                         [types.InlineKeyboardButton(text="👑 Folashtirish", url = f"https://t.me/{db.bot.username}?start={sub.token}")]
                                         ]))
                 break
+    
+    elif update.text == '🎓 Foydalnuvchilar':
+        data = await state.get_data()
+        course = await db.get_course(data.get('course_id'))
+        await db.get_user(course.id) # ther I need get users only be
+
+
     else:
         data = await state.get_data()
         course_id = data.get('course_id')
