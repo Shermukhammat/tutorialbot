@@ -4,7 +4,7 @@ from .params import ParamsManager
 from aiogram.types import User as AiogramUser
 from .users import User, UserStatus, UsersDB
 from .activity import ActivityTracker
-from .course import CoursesManager, Course, CourseButton, CourseButtonType, Test
+from .course import CoursesManager, Course, CourseButton, CourseButtonType, Test, Subscription
 # from .statistic import Statistic
 # from .subscribtion import SubscribtionDB
 

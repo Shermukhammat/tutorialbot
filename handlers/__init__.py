@@ -1,3 +1,3 @@
-from .admin import main
+from . import admin
 from . import commands
 from . import main

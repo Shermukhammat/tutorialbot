@@ -1,15 +1,48 @@
 from loader import dp, db, bot
 from aiogram import types 
 from data import User, UserStatus
-from aiogram.filters import Command, CommandStart
+from aiogram.filters import Command, CommandStart, CommandObject
 from buttons import KeyboardManger
 from aiogram.fsm.context import FSMContext
 from states import AdminPanel
+from asyncio import Semaphore, sleep
 
+
+sema = Semaphore()
 
 @dp.message(CommandStart())
-async def start_command(update: types.Message, user: User):
-    reply_markup = KeyboardManger.home(await db.get_courses())
+async def start_command(update: types.Message, user: User, command: CommandObject, state: FSMContext):
+    if await state.get_state():
+        await state.clear()
+
+    subs = [sub.course for sub in await db.get_subscribtions(update.from_user.id)]
+    reply_markup=KeyboardManger.home(await db.get_courses(), subs = subs)
+
+
+    if command.args:
+        async with sema:
+            sub = await db.get_subscribtion(token = command.args)
+            send_info = False
+            if sub:
+                course = await db.get_course(id = sub.course)
+                sub2 = await db.get_subscribtion(user_id = update.from_user.id, course=sub.course)
+                if sub2:
+                    await update.answer_sticker('CAACAgIAAxkBAAIQYWiSIXUXyWo9h1A24SHuwZ8J27nNAAL4AANWnb0KcRzji0O3QeA2BA')
+                    await update.answer(f"❗️ Sizda allaqachon {course.name} kursi uchun aktiv obuna bor", reply_markup=reply_markup)
+                
+                else:
+                    await db.update_subscribtion(sub.id, user_id = update.from_user.id, token=None)
+                    send_info = True
+
+        if send_info:
+            await update.delete()
+            st = await update.answer_sticker("CAACAgIAAxkBAAIHa2iPFGMVV-5m13haRm5nXlLXO51_AAJJAgACVp29CiqXDJ0IUyEONgQ")
+            await sleep(3)
+            await st.delete()
+            await update.answer("🎉")
+            await update.answer(f"{update.from_user.first_name} siz {course.name} kursiga obuna bo'ldingiz", reply_markup=reply_markup)
+
+        return
     
     if user.is_admin:
         await update.answer(f"👮🏻‍♂️ Admin {update.from_user.full_name} \n🗓 Ro'yxatdan o'tdi: {user.registred_readble}",

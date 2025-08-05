@@ -16,7 +16,8 @@ sema = Semaphore()
 async def main_handler(update : types.Message, state: FSMContext):
     if update.text == "⬅️ Chiqish":
         await state.clear()
-        await update.answer("Bosh menu", reply_markup=KeyboardManger.home(await db.get_courses()))
+        subs = [sub.course for sub in await db.get_subscribtions(update.from_user.id)]
+        await update.answer("🏠 Bosh menyu", reply_markup=KeyboardManger.home(await db.get_courses(), subs = subs))
         return
     
     elif update.text == "➕ Kurs qo'shish":

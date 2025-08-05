@@ -1,13 +1,14 @@
 from aiogram import Router, Dispatcher, types, F
 from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock
-from loader import db, dp
+from loader import db, dp, bot
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
 from asyncio import Semaphore
-from data import Course, CourseButtonType
+from data import Course, CourseButtonType, Subscription
 from utils.mytime import can_edit
 from .main import r, sema, back_to_course_menu
 from aiogram.types import ContentType
+from uuid import uuid4
 
 
 @r.callback_query(AdminCourseMneu.main)
@@ -147,6 +148,22 @@ async def course_menu(update : types.Message, state: FSMContext):
         await state.update_data(type = CourseButtonType.INNER_MENU)
         await update.answer("🎛 Menyu tugmasi nomini kirting", reply_markup=KeyboardManger.back())
 
+    elif update.text == "🎓 Foydalnuvchi qo'shish":
+        async with sema:
+            data = await state.get_data()
+            course = await db.get_course(data.get('course_id'))
+            sub = Subscription(token=uuid4().hex, course=course.id)
+            for _ in range(3):
+                if await db.get_subscribtion(token = sub.token):
+                    sub.token = uuid4().hex
+                    continue
+                
+                await db.add_subscribtion(sub)
+                await update.answer(f"{course.name} kursi uchun obunani folashtirish uchun pastdagi tugmani bosing 👇",
+                                    reply_markup=types.InlineKeyboardMarkup(inline_keyboard=[
+                                        [types.InlineKeyboardButton(text="👑 Folashtirish", url = f"https://t.me/{db.bot.username}?start={sub.token}")]
+                                        ]))
+                break
     else:
         data = await state.get_data()
         course_id = data.get('course_id')

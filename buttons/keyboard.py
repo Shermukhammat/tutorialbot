@@ -1,5 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, KeyboardButtonPollType
-from data import Course, CourseButton, CourseButtonType
+from data import Course, CourseButton, CourseButtonType, Subscription
 import random
 
 class AutoButtons:
@@ -36,13 +36,18 @@ class AutoButtons:
 
 
 class KeyboardManger:
-    def home(courses: list[Course]) -> ReplyKeyboardMarkup:
+    def home(courses: list[Course], subs : list[int] = []) -> ReplyKeyboardMarkup:
         buttons = AutoButtons()
         for course in courses:
-            buttons.add(KeyboardButton(text=course.name), new_line = course.new_line)
+            if course.id in subs:
+                buttons.add(KeyboardButton(text=course.name), new_line = course.new_line)
+            elif course.pro:
+                buttons.add(KeyboardButton(text=f"👑 {course.name}"), new_line = course.new_line)
+            else:
+                buttons.add(KeyboardButton(text=course.name), new_line = course.new_line)
 
         buttons.add(KeyboardButton(text = "📖 Yordam"), new_line=True)
-        buttons.add(KeyboardButton(text = "💎 Sotib olish"))
+        # buttons.add(KeyboardButton(text = "💎 Sotib olish"))
         return buttons.reply_markup
     
     def panel(courses: list[Course]) -> ReplyKeyboardMarkup:
@@ -82,7 +87,7 @@ class KeyboardManger:
         buttons.add(KeyboardButton(text = "➕ Test blok"), new_line = True)
         buttons.add(KeyboardButton(text = "➕ Media"))
         # buttons.add(KeyboardButton(text = "➕ Menu"))
-        buttons.add(KeyboardButton(text = "👥 Foydalanuvchilar"), new_line = True)
+        buttons.add(KeyboardButton(text = "🎓 Foydalnuvchi qo'shish"), new_line = True)
         # buttons.add(KeyboardButton(text=""))
         buttons.add(KeyboardButton(text = "⬅️ Orqaga"), new_line = True)
         return buttons.reply_markup

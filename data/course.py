@@ -2,6 +2,7 @@ from asyncpg import Pool, create_pool, Connection
 from aiocache import SimpleMemoryCache
 from abc import ABC
 import asyncio
+from datetime import datetime, timezone, timedelta
 
 
 class Course:
@@ -18,6 +19,17 @@ class Course:
 
     def __str__(self):
         return f"Course(id={self.id}, name={self.name}, new_line={self.new_line}, pro={self.pro}, message={self.message})"
+
+
+class Subscription:
+    def __init__(self, id: int = None, user_id: int = None, token: str = None, course: int = None):
+        self.id = id
+        self.user_id = user_id
+        self.token = token
+        self.course = course
+
+    def __str__(self):
+        return f"Subscription(id={self.id}, user={self.user_id}, token={self.token})"
 
 
 class CourseButtonType:
@@ -79,7 +91,7 @@ class CoursesManager(ABC):
     async def init_courses(self):
         async with self.pool.acquire() as conn:
             conn : Connection
-            # await conn.execute("DROP TABLE IF EXISTS tests CASCADE;")
+            # await conn.execute("DROP TABLE IF EXISTS subscritpion CASCADE;")
 
             await conn.execute(""" CREATE TABLE IF NOT EXISTS courses (
                                id SERIAL PRIMARY KEY, 
@@ -115,6 +127,13 @@ class CoursesManager(ABC):
                                courses_button INTEGER REFERENCES course_buttons(id) ON DELETE CASCADE,
                                media INTEGER[]
                                );""")
+            await conn.execute(""" CREATE TABLE IF NOT EXISTS subscritpion (
+                               id SERIAL PRIMARY KEY,
+                               user_id BIGINT REFERENCES users(id) ON DELETE CASCADE,
+                               course INTEGER REFERENCES courses(id) ON DELETE CASCADE,
+                               token TEXT
+                               );
+                               """)
             
 
     async def get_course(self, id : int = None, name : str = None) -> Course:
@@ -273,6 +292,45 @@ class CoursesManager(ABC):
             conn : Connection
             for key, value in kwargs.items():
                 await conn.execute(f""" UPDATE tests SET {key} = $1 WHERE id = $2""", value, id)
+
+
+    async def get_subscribtion(self, id : int = None, token: str = None, user_id: int = None, course: int = None) -> Subscription:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            if id:
+                row = await conn.fetchrow(""" SELECT * FROM subscritpion WHERE id = $1;""", id)
+            elif token:
+                row = await conn.fetchrow(""" SELECT * FROM subscritpion WHERE token = $1;""", token)
+            elif user_id and course:
+                row = await conn.fetchrow(""" SELECT * FROM subscritpion WHERE user_id = $1 AND course = $2;""", user_id, course)
+            else:
+                raise ValueError("id or token or user_id and course must be provided")
+
+        if row:
+            return Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course'])
+    
+    async def get_subscribtions(self, user_id: int) -> list[Subscription]:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            rows = await conn.fetch(""" SELECT * FROM subscritpion WHERE user_id = $1;""", user_id)
+        return [Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course']) for row in rows]
+
+    async def add_subscribtion(self, subscribtion : Subscription):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" INSERT INTO subscritpion (user_id, token, course) VALUES ($1, $2, $3);""", subscribtion.user_id, subscribtion.token, subscribtion.course)
+
+    async def delete_subscribtion(self, id : int):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" DELETE FROM subscritpion WHERE id = $1;""", id)
+    
+    async def update_subscribtion(self, id: int, **kwargs):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            for key, value in kwargs.items():
+                await conn.execute(f""" UPDATE subscritpion SET {key} = $1 WHERE id = $2""", value, id)
+
 
 
 async def main():
