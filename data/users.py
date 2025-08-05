@@ -19,6 +19,7 @@ class User:
                  lang : str = 'uz',
                  registered : datetime = None,
                  status : int = UserStatus.active,
+                 phone_number : str = None,
                  is_admin: bool = False
                  ) -> None:
         self.id = id
@@ -26,6 +27,7 @@ class User:
         self.fullname = fullname
         self.status = status
         self.is_admin = is_admin
+        self.phone_number = phone_number
         
         if registered:
             self.registered = registered
@@ -62,6 +64,7 @@ class UsersDB:
                 is_admin BOOLEAN NOT NULL DEFAULT FALSE,
                 lang TEXT NOT NULL DEFAULT 'uz'
             );""")
+            await conn.execute(""" ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT; """)
             await conn.execute("""CREATE TABLE IF NOT EXISTS activity (
                 id BIGINT PRIMARY KEY
             );""")
@@ -108,24 +111,11 @@ class UsersDB:
         return [User(id = row['id'], 
                     registered = row['registered'], 
                     status = row['status'], 
-                    fullname = row['fullname'], 
+                    fullname = row['fullname'],
+                    phone_number = row['phone_number'], 
                     lang = row['lang'], 
                     is_admin=row['is_admin']) for row in rows]
 
-    async def get_useres(self) -> list[User]:
-        async with self.pool.acquire() as conn:
-            conn : Pool
-            users = []
-            rows = await conn.fetch("""SELECT * FROM users;""")
-            for row in rows:
-                users.append(User(id = row['id'], 
-                                   registered = row['registered'], 
-                                   status = row['status'], 
-                                   fullname = row['fullname'], 
-                                   lang = row['lang'], 
-                                   is_admin=row['is_admin'])
-                             )
-        return users
 
 async def update_user_data_from_db(pool : Pool, id : int, **kwargs):
     async with pool.acquire() as conn:
@@ -142,8 +132,8 @@ async def delete_user_from_db(pool : Pool, id : int):
 async def registr_user_to_db(pool : Pool, user : User):
     async with pool.acquire() as conn:
         conn : Pool
-        query = """ INSERT INTO users (id, registered, status, fullname, lang, is_admin) VALUES($1, $2, $3, $4, $5, $6); """
-        values = (user.id, user.registered, user.status, user.fullname, user.lang, user.is_admin)
+        query = """ INSERT INTO users (id, registered, status, fullname, lang, is_admin, phone_number) VALUES($1, $2, $3, $4, $5, $6, $7); """
+        values = (user.id, user.registered, user.status, user.fullname, user.lang, user.is_admin, user.phone_number)
         await conn.execute(query, *values)
 
 
@@ -158,6 +148,7 @@ async def get_user_from_db(pool : Pool, id : int) -> User:
                     status=row['status'],
                     fullname=row['fullname'],
                     lang=row['lang'],
+                    phone_number=row['phone_number'],
                     is_admin=row['is_admin'])
         
 

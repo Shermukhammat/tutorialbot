@@ -102,7 +102,7 @@ async def admin_command(update: types.Message, user: User):
             types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
             types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
             types.BotCommand(command = 'help', description = '📖 Yordam')
-            ])
+            ], scope=types.BotCommandScopeAllPrivateChats())
         await update.answer("Bot komandalari yangilandi")
 
     for user in await db.get_users():

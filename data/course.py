@@ -2,8 +2,10 @@ from asyncpg import Pool, create_pool, Connection
 from aiocache import SimpleMemoryCache
 from abc import ABC
 import asyncio
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta
+from pytz import timezone
 
+tz = timezone('Asia/Tashkent')
 
 class Course:
     def __init__(self, id: int = None, 
@@ -22,11 +24,13 @@ class Course:
 
 
 class Subscription:
-    def __init__(self, id: int = None, user_id: int = None, token: str = None, course: int = None):
+    def __init__(self, id: int = None, user_id: int = None, token: str = None, course: int = None, created_at: datetime = None):
         self.id = id
         self.user_id = user_id
         self.token = token
         self.course = course
+        self.created_at = created_at if created_at else datetime.now(tz)
+
 
     def __str__(self):
         return f"Subscription(id={self.id}, user={self.user_id}, token={self.token})"
@@ -134,6 +138,7 @@ class CoursesManager(ABC):
                                token TEXT
                                );
                                """)
+            await conn.execute(""" ALTER TABLE subscritpion ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ NOT NULL DEFAULT NOW();""")
             
 
     async def get_course(self, id : int = None, name : str = None) -> Course:
@@ -307,18 +312,18 @@ class CoursesManager(ABC):
                 raise ValueError("id or token or user_id and course must be provided")
 
         if row:
-            return Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course'])
+            return Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course'], created_at=row['created_at'])
     
     async def get_subscribtions(self, user_id: int) -> list[Subscription]:
         async with self.pool.acquire() as conn:
             conn : Connection
             rows = await conn.fetch(""" SELECT * FROM subscritpion WHERE user_id = $1;""", user_id)
-        return [Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course']) for row in rows]
+        return [Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course'], created_at=row['created_at']) for row in rows]
 
     async def add_subscribtion(self, subscribtion : Subscription):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO subscritpion (user_id, token, course) VALUES ($1, $2, $3);""", subscribtion.user_id, subscribtion.token, subscribtion.course)
+            await conn.execute(""" INSERT INTO subscritpion (user_id, token, course) VALUES ($1, $2, $3, $4);""", subscribtion.user_id, subscribtion.token, subscribtion.course, subscribtion.created_at)
 
     async def delete_subscribtion(self, id : int):
         async with self.pool.acquire() as conn:
