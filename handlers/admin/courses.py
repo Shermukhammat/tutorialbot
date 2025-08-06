@@ -11,6 +11,55 @@ from aiogram.types import ContentType
 from uuid import uuid4
 
 
+
+@r.callback_query(AdminCourseMneu.main, F.data.startswith('subnext_'))
+async def course_users_paginator(update: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    course = await db.get_course(id = data['course_id'])
+
+    if course:
+        offset = int(update.data.replace('subnext_', ''))
+        subs = await db.get_course_subs(course.id, offset = offset)
+        leng = await db.course_sub_count(course.id)
+        if subs:
+            text = f"{course.name} foydlanuvchilari \n{offset+1 if offset else 1}-{len(subs)+offset} {leng} dan \n"
+            for index, sub in enumerate(subs):
+                text += f"\n{index+1}. {sub.full_name} {sub.created_at_readble} {sub.phone_number}"
+
+            await update.message.edit_text(text, reply_markup=InlineKeyboardManager.course_users_paginator(subs, leng = leng, offset = offset))
+
+@r.callback_query(AdminCourseMneu.main, F.data.startswith('sub_'))
+async def show_subscriber_user(update: types.CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    course = await db.get_course(id = data['course_id'])
+    sub_id = int(update.data.replace('sub_', ''))
+    sub = await db.get_subscribtion(id = sub_id)
+    if sub and sub.user_id:
+        user = await db.get_user(sub.user_id)
+        await update.message.answer(f"👤 Foydalanuvchi: {user.fullname} \n📱 Telefon raqami: {user.phone_number} \n📬 Username: {user.fixsed_username} \n🗓 Ro'yxatdan o'tdi: {user.registred_readble}  \n👑 Oubuna bo'ldi: {sub.created_at_readble}",
+                                    reply_markup=InlineKeyboardManager.delete_user_sub(sub.id))
+
+    elif sub:
+        await update.message.answer(f"👤 Foydalanuvchi: Kutilmoqda \n👑 Oubuna bo'ldi: {sub.created_at_readble}",
+                                    reply_markup=InlineKeyboardManager.delete_user_sub(sub.id))
+    else:
+        await update.answer("❗️Bunday foydalanuvchi topilmadi", show_alert=True)
+
+@r.callback_query(AdminCourseMneu.main, F.data.startswith('delete_sub_'))
+async def delete_sub_handler(update: types.CallbackQuery, state: FSMContext):
+    sub_id = int(update.data.replace('delete_sub_', ''))
+    sub = await db.get_subscribtion(id = sub_id)
+    data = await state.get_data()
+    delete_sub_message_id = data.get('delete_sub_message_id')
+    if sub:
+        if delete_sub_message_id == update.message.message_id:
+            await db.delete_subscribtion(sub.id)
+            await update.answer("✅ Obuna o'chirildi", show_alert=True)
+            await update.message.delete()
+        else:
+            await state.update_data(delete_sub_message_id = update.message.message_id)
+            await update.answer(f"⚠️ Obunani o'chirish uchun ushbu tugmani 3 sonyadan keyin yana bosing", show_alert=True, cache_time=3)
+        
 @r.callback_query(AdminCourseMneu.main)
 async def callback_course_menu_wrapper(update: types.CallbackQuery, state: FSMContext):
     async with sema:
@@ -164,12 +213,26 @@ async def course_menu(update : types.Message, state: FSMContext):
                                         [types.InlineKeyboardButton(text="👑 Folashtirish", url = f"https://t.me/{db.bot.username}?start={sub.token}")]
                                         ]))
                 break
+
+    elif update.text == "🧹 Foydalnuvchilarni tozlash":
+        data = await state.get_data()
+        course = await db.get_course(data.get('course_id'))
+        if course:
+            await state.set_state(AdminCourseMneu.clear_subs_1)
+            await update.answer(f"⚠️ Xaqiqatdan ham {course.name} kursi foydalanuvchilari obunalarni o'chirmoqchimisiz?",
+                                reply_markup=KeyboardManger.yes1())
     
     elif update.text == '🎓 Foydalnuvchilar':
         data = await state.get_data()
         course = await db.get_course(data.get('course_id'))
-        await db.get_user(course.id) # ther I need get users only be
+        if course:
+            leng = await db.course_sub_count(course.id)
+            subs = await db.get_course_subs(course.id)
+            text = f"{course.name} foydlanuvchilari \n1-{len(subs)} {leng} dan \n"
+            for index, sub in enumerate(subs):
+                text += f"\n{index+1}. {sub.full_name} {sub.created_at_readble} {sub.phone_number}"
 
+            await update.answer(text, reply_markup=InlineKeyboardManager.course_users_paginator(subs, leng = leng))
 
     else:
         data = await state.get_data()
@@ -188,15 +251,35 @@ async def course_menu(update : types.Message, state: FSMContext):
             elif button.type == CourseButtonType.INNER_MENU:
                 await update.answer(f"Menyu: {button.name}")
         else:
-            replay_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course_id))
+            replay_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course_id), pro = course.pro)
             await update.answer("❗️ Nomalum buyruq", reply_markup = replay_markup)
 
 
 
-# @r.message(AdminCourseMneu.)
-# async def get_course_button_name(update: types.Message, state: FSMContext):
-#     if update.text == "⬅️ Orqaga":
-#         data = await state.get_data()
-#         course_id = data.get('course_id')
-#         replay_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course_id))
-#         await update.answer("❗️ Nomalum buyruq", reply_markup = replay_markup)
+@r.message(AdminCourseMneu.clear_subs_1)
+async def clear_sub_1(update: types.Message, state: FSMContext):
+    if update.text == "Xa":
+        data = await state.get_data()
+        course_id = data.get('course_id')
+        course = await db.get_course(id = course_id)
+        if course:
+            await state.set_state(AdminCourseMneu.clear_subs_2)
+            await update.answer("☠️")
+            await update.answer(f"⚠️ Aniq {course.name} kursi barcha obunlarni o'chirmoqchimisiz? ❗️ Keyin kurs obunalarni qayta tiklab bo'lmaydi", reply_markup=KeyboardManger.yes2()) 
+
+    else:
+        await back_to_course_menu(update, state)
+
+
+@r.message(AdminCourseMneu.clear_subs_2)
+async def clear_sub_2(update: types.Message, state: FSMContext):
+    if update.text == "Xa 100%":
+        data = await state.get_data()
+        course_id = data.get('course_id')
+        course = await db.get_course(id = course_id)
+        if course:
+            await db.clear_course_subs(course_id)
+            await update.answer("✅ Obunalar o'chirildi")
+            await back_to_course_menu(update, state)
+    else:
+        await back_to_course_menu(update, state)

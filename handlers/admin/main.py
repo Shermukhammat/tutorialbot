@@ -31,7 +31,7 @@ async def main_handler(update : types.Message, state: FSMContext):
         await state.set_state(AdminCourseMneu.main)
         await state.update_data(course_id = course.id)
         
-        reply_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course.id))
+        reply_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course.id), pro = course.pro)
         await update.answer("📚", reply_markup=reply_markup)
         reply_markup = InlineKeyboardManager.edit_course(course)
         message = await update.answer(f"{course.name} kursi", reply_markup=reply_markup)
@@ -50,7 +50,7 @@ async def back_to_course_menu(update: types.Message, state: FSMContext):
         await state.set_state(AdminCourseMneu.main)
         await state.update_data(course_id = course.id)
         
-        reply_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course.id))
+        reply_markup = KeyboardManger.course_admin_menu(await db.get_course_buttons(course.id), pro = course.pro)
         await update.answer("📚", reply_markup=reply_markup)
         reply_markup = InlineKeyboardManager.edit_course(course)
         message = await update.answer(f"{course.name} kursi", reply_markup=reply_markup)

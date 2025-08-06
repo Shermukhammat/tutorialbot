@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from data import Course, CourseButton, CourseButtonType, Test
+from data import Course, CourseButton, CourseButtonType, Test, Subscription
 import math
 
 
@@ -94,3 +94,24 @@ class InlineKeyboardManager:
             bt.add(InlineKeyboardButton(text="➡️", callback_data=f"test_{next}"), new_line=not new_line)
         
         return bt.reply_markup
+    
+
+    def course_users_paginator(subscribtions: list[Subscription], offset: int = 0, limit: int = 10, leng: int = 20) -> InlineKeyboardMarkup:
+        bt=AutoButtons()
+        new_line = False
+
+        for index, sub in enumerate(subscribtions):
+            bt.add(InlineKeyboardButton(text=f"{index+1}", callback_data=f"sub_{sub.id}"))
+        
+        if offset:
+            bt.add(InlineKeyboardButton(text="⬅️", callback_data=f"subnext_{offset-limit}"), new_line=True)
+            new_line = True
+        if offset + limit < leng:
+            bt.add(InlineKeyboardButton(text="➡️", callback_data=f"subnext_{offset+limit}"), new_line=not new_line)
+        return bt.reply_markup
+
+
+    def delete_user_sub(id: int) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🗑 O'chrish", callback_data=f"delete_sub_{id}")]
+            ])

@@ -11,10 +11,10 @@ from asyncio import Semaphore, sleep
 sema = Semaphore()
 
 @dp.message(Command(commands=['start', 'restart']))
-async def start_command(update: types.Message, user: User, command: CommandObject, state: FSMContext):
+async def start_command(update: types.Message, command: CommandObject, state: FSMContext):
     if await state.get_state():
         await state.clear()
-
+    user = await db.get_user(update.from_user.id)
     subs = [sub.course for sub in await db.get_subscribtions(update.from_user.id)]
     reply_markup=KeyboardManger.home(await db.get_courses(), subs = subs)
 
@@ -77,7 +77,8 @@ async def exit_command(update: types.Message):
             ], types.BotCommandScopeChat(chat_id = update.chat.id))
 
 @dp.message(Command('admin'))
-async def admin_command(update: types.Message, user: User, state: FSMContext):
+async def admin_command(update: types.Message, state: FSMContext):
+    user = await db.get_user(update.from_user.id)
     if user.is_admin:
         await state.set_state(state = AdminPanel.main)
         await update.answer("🎛 Admin panel",
@@ -96,7 +97,8 @@ async def admin_command(update: types.Message, user: User, state: FSMContext):
             ], types.BotCommandScopeChat(chat_id = update.chat.id))
 
 @dp.message(Command('commands'))
-async def admin_command(update: types.Message, user: User):
+async def admin_command(update: types.Message):
+    user = await db.get_user(update.from_user.id)
     if user.id == db.DEV_ID:
         await bot.set_my_commands([
             types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),

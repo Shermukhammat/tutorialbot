@@ -4,6 +4,7 @@ from aiocache import SimpleMemoryCache
 from datetime import datetime
 from pytz import timezone
 import asyncpg, asyncio
+from datetime import timezone as dt_tz
 
 tz = timezone('Asia/Tashkent')
 
@@ -20,6 +21,7 @@ class User:
                  registered : datetime = None,
                  status : int = UserStatus.active,
                  phone_number : str = None,
+                 username: str = None,
                  is_admin: bool = False
                  ) -> None:
         self.id = id
@@ -28,6 +30,7 @@ class User:
         self.status = status
         self.is_admin = is_admin
         self.phone_number = phone_number
+        self.username = username
         
         if registered:
             self.registered = registered
@@ -35,8 +38,18 @@ class User:
             self.registered = datetime.now(tz)
 
     @property
+    def fixsed_username(self) -> str:
+        if self.username:
+            return '@' + self.username
+        return ''
+
+    @property
     def registred_readble(self) -> str:
-        return f"{self.registered.year}.{self.registered.month}.{self.registered.day} {self.registered.hour}:{self.registered.minute}"
+        dt = self.registered
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=dt_tz.utc)  # safety for naive
+        dt = dt.astimezone(tz)
+        return dt.strftime("%Y.%m.%d %H:%M")
 
     @property
     def is_active(self) -> bool:
@@ -65,6 +78,7 @@ class UsersDB:
                 lang TEXT NOT NULL DEFAULT 'uz'
             );""")
             await conn.execute(""" ALTER TABLE users ADD COLUMN IF NOT EXISTS phone_number TEXT; """)
+            await conn.execute(""" ALTER TABLE users ADD COLUMN IF NOT EXISTS username TEXT; """)
             await conn.execute("""CREATE TABLE IF NOT EXISTS activity (
                 id BIGINT PRIMARY KEY
             );""")
@@ -114,6 +128,7 @@ class UsersDB:
                     fullname = row['fullname'],
                     phone_number = row['phone_number'], 
                     lang = row['lang'], 
+                    username = row['username'], 
                     is_admin=row['is_admin']) for row in rows]
 
 
@@ -132,8 +147,8 @@ async def delete_user_from_db(pool : Pool, id : int):
 async def registr_user_to_db(pool : Pool, user : User):
     async with pool.acquire() as conn:
         conn : Pool
-        query = """ INSERT INTO users (id, registered, status, fullname, lang, is_admin, phone_number) VALUES($1, $2, $3, $4, $5, $6, $7); """
-        values = (user.id, user.registered, user.status, user.fullname, user.lang, user.is_admin, user.phone_number)
+        query = """ INSERT INTO users (id, registered, status, fullname, lang, is_admin, phone_number, username) VALUES($1, $2, $3, $4, $5, $6, $7, $8); """
+        values = (user.id, user.registered, user.status, user.fullname, user.lang, user.is_admin, user.phone_number, user.username)
         await conn.execute(query, *values)
 
 
@@ -149,6 +164,7 @@ async def get_user_from_db(pool : Pool, id : int) -> User:
                     fullname=row['fullname'],
                     lang=row['lang'],
                     phone_number=row['phone_number'],
+                    username=row['username'],
                     is_admin=row['is_admin'])
         
 

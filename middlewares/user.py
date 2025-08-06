@@ -22,11 +22,9 @@ class UserMiddleware(BaseMiddleware):
     ) -> Any:
         tg_user: TGUser = data["event_from_user"]
         user = await self.db.get_user(tg_user.id)
-
         if user is None:
             user = await register_user(self.db, tg_user, event)
             
-        data["user"] = user
         return await handler(event, data)
 
 
@@ -36,7 +34,7 @@ async def register_user(db: DataBase, tg_user: TGUser, event: Message | Callback
         if user:
             return user
         
-        user = User(id = tg_user.id, fullname = tg_user.full_name)
+        user = User(id = tg_user.id, fullname = tg_user.full_name, username=tg_user.username)
         await db.register_user(user)
         if isinstance(event, Message):
             await event.answer(f"Assalomu alaykum {user.fullname} xush kelibsiz! Men {db.bot.full_name} man",

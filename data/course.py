@@ -4,6 +4,7 @@ from abc import ABC
 import asyncio
 from datetime import datetime, timedelta
 from pytz import timezone
+from datetime import timezone as dt_tz
 
 tz = timezone('Asia/Tashkent')
 
@@ -24,12 +25,28 @@ class Course:
 
 
 class Subscription:
-    def __init__(self, id: int = None, user_id: int = None, token: str = None, course: int = None, created_at: datetime = None):
+    def __init__(self, id: int = None, 
+                 user_id: int = None, 
+                 token: str = None, 
+                 course: int = None, 
+                 created_at: datetime = None,
+                 full_name: str = None,
+                 phone_number: str = None):
         self.id = id
         self.user_id = user_id
         self.token = token
         self.course = course
         self.created_at = created_at if created_at else datetime.now(tz)
+        self.full_name = full_name if full_name else 'Kutilmoqda'
+        self.phone_number = phone_number if phone_number else ''
+
+    @property
+    def created_at_readble(self) -> str:
+        dt = self.created_at
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=dt_tz.utc)  # safety for naive
+        dt = dt.astimezone(tz)
+        return dt.strftime("%Y.%m.%d %H:%M")
 
 
     def __str__(self):
@@ -323,21 +340,49 @@ class CoursesManager(ABC):
     async def add_subscribtion(self, subscribtion : Subscription):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO subscribtions (user_id, token, course, created_at) VALUES ($1, $2, $3, $4);""", subscribtion.user_id, subscribtion.token, subscribtion.course, subscribtion.created_at)
+            await conn.execute(""" INSERT INTO subscribtions (user_id, token, course) VALUES ($1, $2, $3);""", subscribtion.user_id, subscribtion.token, subscribtion.course)
 
     async def delete_subscribtion(self, id : int):
         async with self.pool.acquire() as conn:
             conn : Connection
             await conn.execute(""" DELETE FROM subscribtions WHERE id = $1;""", id)
     
+    async def clear_course_subs(self, course_id: int):
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            await conn.execute(""" DELETE FROM subscribtions WHERE course = $1;""", course_id)
+
+
     async def update_subscribtion(self, id: int, **kwargs):
         async with self.pool.acquire() as conn:
             conn : Connection
             for key, value in kwargs.items():
                 await conn.execute(f""" UPDATE subscribtions SET {key} = $1 WHERE id = $2""", value, id)
 
+    async def course_sub_count(self, course_id : int) -> int:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            row = await conn.fetchrow("""SELECT count(subscribtions.id) FROM subscribtions 
+                                    FULL JOIN users ON subscribtions.user_id = users.id
+                                    WHERE course = $1""", course_id)
+            
+        if row:
+            return row['count']
+        return 0
 
-
+    async def get_course_subs(self, course_id : int, offset: int = 0, limit: int = 10) -> list[Subscription]:
+        async with self.pool.acquire() as conn:
+            conn : Connection
+            rows = await conn.fetch("""SELECT s.*, u.fullname, u.phone_number
+FROM subscribtions AS s
+LEFT JOIN users AS u ON u.id = s.user_id
+WHERE s.course = $1
+ORDER BY s.created_at DESC
+OFFSET $2 LIMIT $3;""", course_id, offset, limit)
+        
+        return [Subscription(id=row['id'], user_id=row['user_id'], token=row['token'], course=row['course'], created_at=row['created_at'], full_name=row['fullname'], phone_number=row['phone_number']) for row in rows]
+    
+    
 async def main():
     class Tetser(CoursesManager):
         def __init__(self):

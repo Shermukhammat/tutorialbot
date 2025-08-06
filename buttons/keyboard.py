@@ -79,17 +79,18 @@ class KeyboardManger:
             [KeyboardButton(text = "⬅️ Orqaga")]
         ], resize_keyboard=True)
 
-    def course_admin_menu(course_buttons: list[CourseButton]) -> ReplyKeyboardMarkup:
+    def course_admin_menu(course_buttons: list[CourseButton], pro: bool = True) -> ReplyKeyboardMarkup:
         buttons = AutoButtons()
         for course_button in course_buttons:
             buttons.add(KeyboardButton(text=course_button.name), new_line = course_button.new_line)
 
         buttons.add(KeyboardButton(text = "➕ Test blok"), new_line = True)
         buttons.add(KeyboardButton(text = "➕ Media"))
-        buttons.add(KeyboardButton(text = "➕ Foydalnuvchi"))
+        if pro:
+            buttons.add(KeyboardButton(text = "➕ Foydalnuvchi"))
 
-        buttons.add(KeyboardButton(text="🎓 Foydalnuvchilar"), new_line=True)
-        buttons.add(KeyboardButton(text = "🧹 Foydalnuvchilarni tozlash"))
+            buttons.add(KeyboardButton(text="🎓 Foydalnuvchilar"), new_line=True)
+            buttons.add(KeyboardButton(text = "🧹 Foydalnuvchilarni tozlash"))
         
         buttons.add(KeyboardButton(text = "⬅️ Orqaga"), new_line = True)
         return buttons.reply_markup

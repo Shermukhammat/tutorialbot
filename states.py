@@ -20,6 +20,9 @@ class AdminCourseMneu(StatesGroup):
     delete1 = State()
     delete2 = State()
 
+    clear_subs_1 = State()
+    clear_subs_2 = State()
+
 
 class AdminCourseButton(StatesGroup):
     main = State()
