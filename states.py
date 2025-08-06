@@ -44,3 +44,10 @@ class AdminTestBlock(StatesGroup):
     edit_name = State()
     edit_time = State()
     delete = State()
+
+
+class AdminMedia(StatesGroup):
+    main = State()
+    get_media = State()
+    rename = State()
+    delete = State()

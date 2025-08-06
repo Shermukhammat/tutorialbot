@@ -67,6 +67,14 @@ class KeyboardManger:
             [KeyboardButton(text = "⬅️ Orqaga")]
         ], resize_keyboard=True)
     
+    def media_saver(save: bool = False) -> ReplyKeyboardMarkup:
+        if save:
+            return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text = "✅ Saqlash")],
+            [KeyboardButton(text = "⬅️ Orqaga")]
+        ], resize_keyboard=True)
+        return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text = "⬅️ Orqaga")]], resize_keyboard=True)
+    
     def time_button() -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text = "♾️ Vaxt belgilanmasin")],
@@ -129,6 +137,16 @@ class KeyboardManger:
                 [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
                 [KeyboardButton(text=f"⏳ Vaxt: {button.display_time}"), KeyboardButton(text= "✅ Testlarni arlashtir" if button.mix_tests else "❌ Testlarni arlashtir")],
                 [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
+                [KeyboardButton(text="🗑 O'chirish")],
+                [KeyboardButton(text="⬅️ Orqaga")]
+            ]
+            keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
+            return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+        
+        elif button.type == CourseButtonType.MEDIA:
+            keyboard=[
+                [KeyboardButton(text="🔄 Mediani yangilash"), KeyboardButton(text="📁 Media")],
+                [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
                 [KeyboardButton(text="🗑 O'chirish")],
                 [KeyboardButton(text="⬅️ Orqaga")]
             ]

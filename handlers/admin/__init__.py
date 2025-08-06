@@ -1,1 +1,1 @@
-from . import main, courses, course_buttons, testblock
+from . import main, courses, course_buttons, testblock, media

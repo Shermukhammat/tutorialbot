@@ -1,5 +1,5 @@
 from aiogram import Router, Dispatcher, types, F
-from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock
+from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock, AdminMedia
 from loader import db, dp, bot
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
@@ -192,10 +192,10 @@ async def course_menu(update : types.Message, state: FSMContext):
         await state.update_data(type = CourseButtonType.MEDIA)
         await update.answer("📁 Media tugmasi nomini kirting", reply_markup=KeyboardManger.back())
 
-    elif update.text == "➕ Menu":
-        await state.set_state(AdminCourseButton.add)
-        await state.update_data(type = CourseButtonType.INNER_MENU)
-        await update.answer("🎛 Menyu tugmasi nomini kirting", reply_markup=KeyboardManger.back())
+    # elif update.text == "➕ Menu":
+    #     await state.set_state(AdminCourseButton.add)
+    #     await state.update_data(type = CourseButtonType.INNER_MENU)
+    #     await update.answer("🎛 Menyu tugmasi nomini kirting", reply_markup=KeyboardManger.back())
 
     elif update.text == "➕ Foydalnuvchi":
         async with sema:
@@ -247,7 +247,10 @@ async def course_menu(update : types.Message, state: FSMContext):
                 await update.answer(f"Test blog: {button.name}", reply_markup=KeyboardManger.edit_course_button(button, pro=course.pro))
                 
             elif button.type == CourseButtonType.MEDIA:
-                await update.answer(f"Media: {button.name}")
+                await state.set_state(AdminMedia.main)
+                await state.update_data(button_id = button.id)
+                await update.answer(f"Media: {button.name}", reply_markup=KeyboardManger.edit_course_button(button, pro=course.pro))
+
             elif button.type == CourseButtonType.INNER_MENU:
                 await update.answer(f"Menyu: {button.name}")
         else:

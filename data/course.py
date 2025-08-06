@@ -69,6 +69,7 @@ class CourseButton:
                  open: bool = False,
                  mix_tests: bool = False,
                  mix_options: bool = False,
+                 media: list[int] = [],
                  time: int = None):
         self.id = id
         self.name = name
@@ -79,6 +80,7 @@ class CourseButton:
         self.mix_tests = mix_tests
         self.mix_options = mix_options
         self.time = time
+        self.media = media
 
     def __str__(self):
         return f"CourseButton(id={self.id}, name={self.name}, course={self.course}, type={self.type})"
@@ -132,7 +134,7 @@ class CoursesManager(ABC):
                                mix_options BOOLEAN NOT NULL DEFAULT FALSE,
                                time INTEGER
                                );""")
-            # await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS mix_tests BOOLEAN NOT NULL DEFAULT FALSE;")
+            await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS media INTEGER[] NOT NULL DEFAULT '{}';")
             # await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS mix_options BOOLEAN NOT NULL DEFAULT FALSE;")
             # await conn.execute("ALTER TABLE course_buttons ADD COLUMN IF NOT EXISTS time INTEGER;")
             await conn.execute(""" CREATE TABLE IF NOT EXISTS tests (
@@ -223,8 +225,8 @@ class CoursesManager(ABC):
     async def add_course_button(self, button : CourseButton):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO course_buttons (name, course, type, new_line, open) VALUES ($1, $2, $3, $4, $5);""", 
-                               button.name, button.course, button.type, button.new_line, button.open)
+            await conn.execute(""" INSERT INTO course_buttons (name, course, type, new_line, open, media, mix_tests, mix_options, time) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9);""", 
+                               button.name, button.course, button.type, button.new_line, button.open, button.media, button.mix_tests, button.mix_options, button.time)
             
         await self.__courses_cache.delete(f"cb{button.course}")
 
@@ -246,6 +248,7 @@ class CoursesManager(ABC):
                                 new_line=row['new_line'], 
                                 open=row['open'],
                                 mix_tests=row['mix_tests'],
+                                media=row['media'],
                                 mix_options=row['mix_options'],
                                 time=row['time'])
     
@@ -257,7 +260,7 @@ class CoursesManager(ABC):
         async with self.pool.acquire() as conn:
             conn: Connection
             rows = await conn.fetch(""" SELECT * FROM course_buttons WHERE course = $1 ORDER BY id;""", course_id)
-            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open'], mix_tests=row['mix_tests'], mix_options=row['mix_options'], time=row['time']) for row in rows]
+            buttons = [CourseButton(id=row['id'], name=row['name'], course=row['course'], type=row['type'], new_line=row['new_line'], open=row['open'], mix_tests=row['mix_tests'], mix_options=row['mix_options'], time=row['time'], media=row['media']) for row in rows]
             await self.__courses_cache.set(f'cb{course_id}', buttons)
         return buttons
     
