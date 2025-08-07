@@ -40,6 +40,8 @@ async def start_command(update: types.Message, command: CommandObject, state: FS
             await sleep(3)
             await st.delete()
             await update.answer("🎉")
+            subs = [sub.course for sub in await db.get_subscribtions(update.from_user.id)]
+            reply_markup=KeyboardManger.home(await db.get_courses(), subs = subs)
             await update.answer(f"{update.from_user.first_name} siz {course.name} kursiga obuna bo'ldingiz", reply_markup=reply_markup)
 
         return

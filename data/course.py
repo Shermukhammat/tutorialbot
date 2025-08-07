@@ -233,7 +233,7 @@ class CoursesManager(ABC):
     async def get_course_button(self, course_id : int = None, name: str = None, id : int = None) -> CourseButton:
         async with self.pool.acquire() as conn:
             conn : Connection
-            if name:
+            if name and course_id:
                 row = await conn.fetchrow(""" SELECT * FROM course_buttons WHERE course = $1 AND name = $2;""", course_id, name)
             elif id:
                 row = await conn.fetchrow(""" SELECT * FROM course_buttons WHERE id = $1;""", id)

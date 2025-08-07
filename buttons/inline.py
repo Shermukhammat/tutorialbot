@@ -115,3 +115,8 @@ class InlineKeyboardManager:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="🗑 O'chrish", callback_data=f"delete_sub_{id}")]
             ])
+    
+    def buy_course(admin_username: str) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="👮🏻‍♂️ Adminga yozish", url = f'https://t.me/{admin_username}')]
+            ])

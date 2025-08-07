@@ -152,3 +152,16 @@ class KeyboardManger:
             ]
             keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
             return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+        
+
+    def course_menu(buttons: list[CourseButton], pro : bool = False, subscribed: bool = False) -> ReplyKeyboardMarkup:
+        bt = AutoButtons()
+        # print('subscribed:', subscribed, 'pro:', pro)
+        for button in buttons:
+            if pro and not subscribed:
+                bt.add(KeyboardButton(text=f"{'' if button.open else '🔒 '}{button.name}"), new_line=button.new_line)
+            else:
+                bt.add(KeyboardButton(text=f"{button.name}"), new_line=button.new_line)
+
+        bt.add(KeyboardButton(text="⬅️ Orqaga"), new_line=True)
+        return bt.reply_markup
