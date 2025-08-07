@@ -67,6 +67,17 @@ class KeyboardManger:
             [KeyboardButton(text = "⬅️ Orqaga")]
         ], resize_keyboard=True)
     
+    def test_buttons(skip_button: bool| None = False) -> ReplyKeyboardMarkup:
+        if skip_button:
+            return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text = "➡️ Keyingi")],
+            [KeyboardButton(text = "❌ Bekor qilish")]
+        ], resize_keyboard=True)
+
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text = "❌ Bekor qilish")]
+        ], resize_keyboard=True)
+    
     def media_saver(save: bool = False) -> ReplyKeyboardMarkup:
         if save:
             return ReplyKeyboardMarkup(keyboard=[

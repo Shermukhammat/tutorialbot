@@ -1,2 +1,2 @@
-from . import course
+from . import course, test
 from . import main

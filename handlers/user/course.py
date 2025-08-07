@@ -5,7 +5,7 @@ from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
 from asyncio import sleep
 from states.user import UserStates
-
+from utils import TestManager
 
 
 r = Router()
@@ -47,7 +47,28 @@ async def course_menu_handler(update: types.Message, state: FSMContext):
         elif button.type == CourseButtonType.TEST:
             tests = await db.get_tests(button.id)
             if tests:
-                pass
+                manager = TestManager(tests, mix_tests=button.mix_tests, time=button.time)
+                test = manager.pop_test()
+                if test.question_long:
+                    text=f", {manager.time_left}]" if manager.time else ']'
+                    await update.answer(f"[{test.number}/{len(tests)}"+text, )
+
+                if test.media:
+                    await bot.copy_message(chat_id=update.from_user.id, 
+                                        message_id=test.media,
+                                        protect_content=db.PROTECT_CONTENT,
+                                        from_chat_id=db.DATA_CHANEL_ID)
+
+                m = await update.answer_poll(question = test.display_question(manager.time_left),
+                                         options = test.mixsed_options,
+                                         correct_option_id = test.correct_index,
+                                         type='quiz',
+                                         protect_content=db.PROTECT_CONTENT,
+                                         explanation=test.info,
+                                         is_anonymous=False,
+                                         reply_markup=KeyboardManger.test_buttons(manager.tests_leng))
+                await state.set_state(UserStates.in_test)
+                await state.update_data(manager = manager, poll_id = m.poll.id, course_button_id = button.id)
             else:
                 await update.answer_sticker('CAACAgIAAxkBAAIHbGiPFIlhq8G6gLcKvA-jWf1yz2kIAAL5AANWnb0KlWVuqyorGzY2BA')
                 await update.answer(f"{button.name} da hozirda birortaham test yo'q", reply_markup=KeyboardManger.course_menu(buttons, pro = course.pro)) 

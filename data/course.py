@@ -5,6 +5,7 @@ import asyncio
 from datetime import datetime, timedelta
 from pytz import timezone
 from datetime import timezone as dt_tz
+import random
 
 tz = timezone('Asia/Tashkent')
 
@@ -97,6 +98,32 @@ class Test:
         self.media = media
         self.options = options
         self.info = info
+        self.mixsed_options = random.sample(self.options, len(self.options))
+        self.number = None
+        self.tests_leng = None
+
+    def display_question(self, time_left: str | None = None) -> str:
+        if self.question_long:
+            return self.question
+        if time_left:
+            return f"[{self.number}/{self.tests_leng}, {time_left}] {self.question}"
+        return f"[{self.number}/{self.tests_leng}] {self.question}"
+
+    @property
+    def question_long(self) -> bool:
+        if len(self.question) > 225:
+            return True
+        return False
+
+
+    @property
+    def correct_option(self) -> str:
+        return self.options[0]
+    
+    @property
+    def correct_index(self) -> int:
+        return self.mixsed_options.index(self.correct_option)
+
     
     @property
     def safe_question(self) -> str:
