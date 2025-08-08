@@ -20,6 +20,10 @@ class Settings(StatesGroup):
     add_admin = State()
     delete_admin = State()
 
+    add_chanel = State()
+    remov_chanel = State()
+    
+
 
 class AdminCourseMneu(StatesGroup):
     main = State()

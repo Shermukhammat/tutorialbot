@@ -4,13 +4,14 @@ from loader import db, dp, bot
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
 from asyncio import Semaphore
-from data import Course, CourseButtonType, Subscription
+from data import Course, CourseButtonType, Subscription, Chanel
 from utils.mytime import can_edit
 from .main import r, back_to_course_menu
 from aiogram.types import ContentType
 from uuid import uuid4
 from aiogram.enums import ParseMode
 from ..commands import set_user_commands, set_admin_commands
+from aiogram.types import ChatMemberAdministrator, ChatMemberOwner
 
 
 sema = Semaphore()
@@ -123,12 +124,104 @@ async def get_help_content(update: types.Message, state: FSMContext):
         await db.update_params()
         await update.answer("✅ Yordam kontenti yangilandi", reply_markup=KeyboardManger.settings())
 
+
+
+@r.callback_query(Settings.main, F.data == 'add_chanel')
+async def delete_admin(update: types.CallbackQuery, state: FSMContext):
+    if len(db.CHANELS) >= 10:
+        await update.answer("❗️ Majburiy obuna kanallari soni 10tadan ko'p bo'lishi mumkun emas", show_alert=True)
+        return
+    
+    await state.set_state(Settings.add_chanel)
+    await update.message.answer("🔫 O‘chirmoqchi bo‘lgan kanal ID sini kiriting \n\nID ni olish uchun \n• Botni kanalingizga admin qiling \n• Kanalda /id buyrug‘ini yuboring", 
+                                reply_markup=KeyboardManger.back())
+
+
+@r.message(Settings.add_chanel)
+async def add_chanel(update: types.Message, state: FSMContext):
+    if update.text == "⬅️ Orqaga":
+        await state.set_state(Settings.main)
+        await update.answer("Sozlamalar menyusi", reply_markup = KeyboardManger.settings())
+
+    elif update.text and update.text.strip().replace('-', '').isnumeric():
+        id = int(update.text.strip())
+        if id in [chanel.id for chanel in db.CHANELS]:
+            await update.answer("Bu kanal allaqachon qo'shilgan", reply_markup=KeyboardManger.back())
+            return
+        
+        try:
+            member = await bot.get_chat_member(id, db.bot.id)
+            if member and isinstance(member, ChatMemberAdministrator):
+                tg_chanel = await bot.get_chat(id)
+                invite_link = await bot.create_chat_invite_link(tg_chanel.id, name=f'{db.bot.full_name}')
+                url = invite_link.invite_link
+                chanel = Chanel({'id': id, 'name': tg_chanel.title, 'username': tg_chanel.username, 'url': url})
+                db.CHANELS.append(chanel)
+                db.params_data['chanels'] = [chanel.row_data for chanel in db.CHANELS]
+                await db.update_params()
+
+                await state.set_state(Settings.main)
+                await update.answer(f"✅ {chanel.name} kanali majburiy obunaga qo'shildi", reply_markup=KeyboardManger.back())
+
+            else:
+                await update.answer("❗️ Bunday kanal mavjud emas yoki bot admin emas", reply_markup=KeyboardManger.back())
+
+        except Exception as e:
+            print(e)
+            await update.answer("❗️ Bunday kanal mavjud emas yoki bot admin emas", reply_markup=KeyboardManger.back())
+    else:
+        await update.answer("❗️ Yangi kanal idsni kirting", reply_markup=KeyboardManger.back())
+
+
+
+@r.callback_query(Settings.main, F.data == 'remove_chanel')
+async def remove_chanel(update: types.CallbackQuery, state: FSMContext):
+    await state.set_state(Settings.remov_chanel)
+    await update.message.answer("🔫 Olib tashlamoqchi bo'lgan kanal ID raqamini kiriting", 
+                                reply_markup=KeyboardManger.back())
+    
+
+@r.message(Settings.remov_chanel)
+async def remove_chanel_handler(update: types.Message, state: FSMContext):
+    if update.text == "⬅️ Orqaga":
+        await state.set_state(Settings.main)
+        await update.answer("Sozlamalar menyusi", reply_markup=KeyboardManger.settings())
+    
+    elif update.text and update.text.replace('-', '').isnumeric():
+        id = int(update.text)
+        if id in [chanel.id for chanel in db.CHANELS]:
+            db.CHANELS = [chanel for chanel in db.CHANELS if chanel.id != id]
+            db.params_data['chanels'] = [chanel.row_data for chanel in db.CHANELS]
+            await db.update_params()
+
+            await state.set_state(Settings.main)
+            await update.answer("✅ Kanallardan o'chirildi", reply_markup=KeyboardManger.settings())
+
+        else:
+            await update.answer("❗️ Bunday kanal topilmadi", reply_markup=KeyboardManger.back())
+    else:
+        await update.answer("❗️ Idni faqat raqam ko'rinishda kiriting", reply_markup=KeyboardManger.back())
+
+
 @r.message(Settings.main)
 async def settings_main(update: types.Message, state: FSMContext):
     if update.text == "⬅️ Orqaga":
         await state.set_state(AdminPanel.main)
         await update.answer("🎛 Admin panel", reply_markup=KeyboardManger.panel(await db.get_courses()))
         
+    elif update.text == '📡 Kanallar':
+        if db.CHANELS:
+            text = "Majburiy obuna kanallari:"
+            for index, chanel in enumerate(db.CHANELS):
+                text += f"\n\n{index+1}. {chanel.name} {'@'+chanel.username if chanel.username else ''} \n🆔: `{chanel.id}`"
+            
+            try:
+                await update.answer(text, reply_markup=InlineKeyboardManager.chanel_button(), parse_mode=ParseMode.MARKDOWN)
+            except:
+                await update.answer(text, reply_markup=InlineKeyboardManager.chanel_button())
+        else:
+            await update.answer("⚡️ Birortaham kanal yo'q", reply_markup=InlineKeyboardManager.chanel_button())
+
     elif update.text == '👮🏻‍♂️ Adminlar':
         admins = await db.get_admins()
         text = 'Adminlar: '

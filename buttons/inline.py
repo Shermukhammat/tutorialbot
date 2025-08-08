@@ -131,3 +131,8 @@ class InlineKeyboardManager:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="➕", callback_data="add_admin"), InlineKeyboardButton(text="➖ ", callback_data="remove_admin")]
         ])
+    
+    def chanel_button() -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="➕", callback_data="add_chanel"), InlineKeyboardButton(text="➖ ", callback_data="remove_chanel")]
+        ])

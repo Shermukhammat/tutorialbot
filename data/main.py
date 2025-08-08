@@ -1,6 +1,6 @@
 import asyncpg, asyncio
 from asyncpg import Pool, Connection
-from .params import ParamsManager
+from .params import ParamsManager, Chanel
 from aiogram.types import User as AiogramUser
 from .users import User, UserStatus, UsersDB
 from .activity import ActivityTracker

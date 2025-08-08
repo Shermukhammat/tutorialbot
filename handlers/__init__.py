@@ -1,3 +1,3 @@
 from . import admin
 from . import commands
-from . import user
+from . import user, chanel
