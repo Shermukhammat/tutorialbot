@@ -25,7 +25,7 @@ async def help_button(update: types.Message):
 async def get_sticer_file_id(update : types.Message, state: FSMContext):
     await update.answer(f"`{update.sticker.file_id}`", parse_mode="MarkdownV2")
 
-@r.message()
+@r.message(F.content_type.in_({types.ContentType.TEXT}))
 async def main_handler(update : types.Message, state: FSMContext):
     user = await db.get_user(update.from_user.id)
     course = await db.get_course(name=update.text[2:] if update.text.startswith('👑 ') else update.text)

@@ -130,7 +130,19 @@ class UsersDB:
                     lang = row['lang'], 
                     username = row['username'], 
                     is_admin=row['is_admin']) for row in rows]
-
+    
+    async def get_admins(self) -> list[User]:
+        async with self.pool.acquire() as conn:
+            conn : Pool
+            rows = await conn.fetch("""SELECT * FROM users WHERE is_admin = TRUE""")       
+        return [User(id = row['id'], 
+                    registered = row['registered'], 
+                    status = row['status'], 
+                    fullname = row['fullname'],
+                    phone_number = row['phone_number'], 
+                    lang = row['lang'], 
+                    username = row['username'], 
+                    is_admin=row['is_admin']) for row in rows]
 
 async def update_user_data_from_db(pool : Pool, id : int, **kwargs):
     async with pool.acquire() as conn:

@@ -139,7 +139,9 @@ async def set_user_commands(chat_id : int | None = None):
             types.BotCommand(command = 'help', description = '📖 Yordam')
             ], scope=types.BotCommandScopeAllPrivateChats())
 
-
+@dp.message(Command('id'))
+async def idh(update: types.Message):
+    await update.reply(f"id: `{update.from_user.id}`", parse_mode='markdown')
 
 @dp.message(Command('help'))
 async def help_command(update: types.Message):

@@ -17,6 +17,9 @@ class Settings(StatesGroup):
     main = State()
     update_help_content = State()
 
+    add_admin = State()
+    delete_admin = State()
+
 
 class AdminCourseMneu(StatesGroup):
     main = State()
