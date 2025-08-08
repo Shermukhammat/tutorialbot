@@ -188,3 +188,11 @@ class KeyboardManger:
         return ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text="📱 Telefon raqamni yuborish", request_contact = True)]
         ], resize_keyboard=True)
+    
+
+    def settings() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="👮🏻‍♂️ Adminlar"), KeyboardButton(text="📡 Kanallar")],
+            [KeyboardButton(text="📖 Yordam kontenti")],
+            [KeyboardButton(text="⬅️ Orqaga")]
+        ], resize_keyboard=True)

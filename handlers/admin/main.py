@@ -1,5 +1,5 @@
 from aiogram import Router, Dispatcher, types, F
-from states import AdminPanel, AdminCourseMneu
+from states import AdminPanel, AdminCourseMneu, Settings
 from loader import db, dp
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
@@ -25,6 +25,10 @@ async def main_handler(update : types.Message, state: FSMContext):
         await update.answer("👌 Yaxshi, yangi kurs nomini kiriting", reply_markup = KeyboardManger.back())
         return
     
+    elif update.text == '⚙️ Sozlamalar':
+        await state.set_state(Settings.main)
+        await update.answer("Sozlamalar menyusi", reply_markup=KeyboardManger.settings())
+        return
 
     course = await db.get_course(name=update.text)
     if course:

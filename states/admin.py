@@ -12,6 +12,12 @@ class AdminPanel(StatesGroup):
     delete_course = State()
 
 
+
+class Settings(StatesGroup):
+    main = State()
+    update_help_content = State()
+
+
 class AdminCourseMneu(StatesGroup):
     main = State()
 

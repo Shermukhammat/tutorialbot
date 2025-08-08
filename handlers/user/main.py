@@ -1,5 +1,5 @@
 from aiogram import Router, Dispatcher, types, F
-from loader import db, dp
+from loader import db, dp, bot
 from buttons import KeyboardManger
 from aiogram.fsm.context import FSMContext
 from asyncio import sleep
@@ -10,6 +10,16 @@ from states.user import UserStates
 r = Router()
 dp.include_router(r)
 
+
+
+@dp.message(F.text == '📖 Yordam')
+async def help_button(update: types.Message):
+    if db.HELP_CONTENT:
+        await bot.copy_message(chat_id=update.from_user.id,
+                               from_chat_id=db.DATA_CHANEL_ID,
+                               message_id=db.HELP_CONTENT)
+    else:
+        await update.answer("⚡️ Yordam ma'lumoti tez orada yuklanadi")
 
 @r.message(F.content_type.in_({types.ContentType.STICKER,}))
 async def get_sticer_file_id(update : types.Message, state: FSMContext):

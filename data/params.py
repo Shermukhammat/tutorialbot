@@ -102,6 +102,7 @@ class ParamsManager:
         self.DEV_ID : int = self.params_data.get('dev_id')
         self.CONTACT_ADMIN : str = self.params_data.get('contact_admin', 'TemirovDS')
         self.PROTECT_CONTENT : bool = self.params_data.get('protect_content', True)
+        self.HELP_CONTENT = self.params_data.get('help_content')
 
         self.CHANELS : list[Chanel] = [Chanel(chanel) for chanel in self.params_data.get('chanels', [])]
         self.CHANELS_DICT = {chanel.id : chanel for chanel in self.CHANELS}

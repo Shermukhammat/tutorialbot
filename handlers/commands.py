@@ -138,3 +138,14 @@ async def set_user_commands(chat_id : int | None = None):
             types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
             types.BotCommand(command = 'help', description = '📖 Yordam')
             ], scope=types.BotCommandScopeAllPrivateChats())
+
+
+
+@dp.message(Command('help'))
+async def help_command(update: types.Message):
+    if db.HELP_CONTENT:
+        await bot.copy_message(chat_id=update.from_user.id,
+                               from_chat_id=db.DATA_CHANEL_ID,
+                               message_id=db.HELP_CONTENT)
+    else:
+        await update.answer("⚡️ Yordam ma'lumoti tez orada yuklanadi")

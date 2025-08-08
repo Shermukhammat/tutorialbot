@@ -120,3 +120,9 @@ class InlineKeyboardManager:
         return InlineKeyboardMarkup(inline_keyboard=[
             [InlineKeyboardButton(text="👮🏻‍♂️ Adminga yozish", url = f'https://t.me/{admin_username}')]
             ])
+    
+
+    def update_button(callback_data: str) -> InlineKeyboardMarkup:
+        return InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text="🔄 Yangilash", callback_data=callback_data)]
+        ])
