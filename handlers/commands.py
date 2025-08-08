@@ -6,6 +6,7 @@ from buttons import KeyboardManger
 from aiogram.fsm.context import FSMContext
 from states import AdminPanel
 from asyncio import Semaphore, sleep
+from states.user import UserStates
 
 
 sema = Semaphore()
@@ -60,6 +61,20 @@ async def start_command(update: types.Message, command: CommandObject, state: FS
                             reply_markup = reply_markup)
 
 
+@dp.message(Command('number'))
+async def dev_command(update: types.Message, state: FSMContext):
+    await state.set_state(UserStates.update_phone_number)
+    user = await db.get_user(update.from_user.id)
+    if user.phone_number:
+        await update.answer(f"Hozidagi sizning telefon raqamingiz: {user.phone_number}. Telfon raqamingizni yangilash uchun telfon raqamni yuborish tugmasni bosing",
+                            reply_markup=KeyboardManger.request_phone_number(back = True))
+        
+    else:
+        await update.answer(f"Telfon raqamingizni qoshishu uchun telfon raqamni yuborish tugmasni bosing",
+                            reply_markup=KeyboardManger.request_phone_number(back = True))
+        
+
+
 
 @dp.message(Command('dev'))
 async def dev_command(update: types.Message):
@@ -71,12 +86,8 @@ async def dev_command(update: types.Message):
 async def exit_command(update: types.Message):
     if update.from_user.id == db.DEV_ID:
         await db.remove_user(update.from_user.id)
+        await set_user_commands(update.from_user.id)
         await update.answer("Botdan chiqdingiz", reply_markup=types.ReplyKeyboardRemove())
-        
-        await bot.set_my_commands([
-            types.BotCommand(command = 'help', description = '📖 Yordam'),
-            types.BotCommand(command = 'buy', description = '💎 Kurs sotib olish')
-            ], types.BotCommandScopeChat(chat_id = update.chat.id))
 
 @dp.message(Command('admin'))
 async def admin_command(update: types.Message, state: FSMContext):
@@ -88,37 +99,42 @@ async def admin_command(update: types.Message, state: FSMContext):
     
     elif user.id == db.DEV_ID:
         await db.update_user(user.id, is_admin = True)
+        await set_admin_commands(update.from_user.id)
         await update.answer("Dasturchi siz endi adminsiz")
 
-        await bot.set_my_commands([
+
+@dp.message(Command('commands'))
+async def comands_command(update: types.Message):
+    user = await db.get_user(update.from_user.id)
+    if user.id == db.DEV_ID:
+        await set_user_commands()
+        for user in await db.get_users():
+            if user.is_admin:
+                await set_admin_commands(user.id)
+
+        await update.answer("Bot komandalari yangilandi")
+
+
+async def set_admin_commands(chat_id: int):
+    await bot.set_my_commands([
             types.BotCommand(command = 'admin', description = '👮🏻‍♂️ Admin panel'),
             types.BotCommand(command = 'stats', description = '📊 Bot statistikasi'),
             types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
             types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
             types.BotCommand(command = 'help', description = '📖 Yordam')
-            ], types.BotCommandScopeChat(chat_id = update.chat.id))
+            ], types.BotCommandScopeChat(chat_id = chat_id))
+    
 
-@dp.message(Command('commands'))
-async def admin_command(update: types.Message):
-    user = await db.get_user(update.from_user.id)
-    if user.id == db.DEV_ID:
+async def set_user_commands(chat_id : int | None = None):
+    if chat_id:
+        await bot.set_my_commands([
+            types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
+            types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
+            types.BotCommand(command = 'help', description = '📖 Yordam')
+            ], scope=types.BotCommandScopeChat(chat_id = chat_id))
+    else:
         await bot.set_my_commands([
             types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
             types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
             types.BotCommand(command = 'help', description = '📖 Yordam')
             ], scope=types.BotCommandScopeAllPrivateChats())
-        await update.answer("Bot komandalari yangilandi")
-
-    for user in await db.get_users():
-        if user.is_admin:
-            await bot.set_my_commands([
-            types.BotCommand(command = 'admin', description = '👮🏻‍♂️ Admin panel'),
-            types.BotCommand(command = 'stats', description = '📊 Bot statistikasi'),
-            types.BotCommand(command = 'restart', description = '🔄 Botni qayta ishga tushrish'),
-            types.BotCommand(command = 'number', description = '📱 Telefon raqamni yangilash'),
-            types.BotCommand(command = 'help', description = '📖 Yordam')
-            ], types.BotCommandScopeChat(chat_id = user.id))
-
-# @dp.message()
-# async def main_handler(update: types.Message, user: User):
-#     await update.answer("Bosh menu", reply_markup=KeyboardManger.home(await db.get_courses()))

@@ -176,3 +176,15 @@ class KeyboardManger:
 
         bt.add(KeyboardButton(text="⬅️ Orqaga"), new_line=True)
         return bt.reply_markup
+    
+
+    def request_phone_number(back : bool = False) -> ReplyKeyboardMarkup:
+        if back:
+            return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="📱 Telefon raqamni yuborish", request_contact = True)],
+            [KeyboardButton(text="⬅️ Orqaga")]
+            ], resize_keyboard=True)
+        
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="📱 Telefon raqamni yuborish", request_contact = True)]
+        ], resize_keyboard=True)
