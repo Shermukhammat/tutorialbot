@@ -3,7 +3,7 @@ from aiogram.types import Message, User as TGUser, TelegramObject, CallbackQuery
 from typing import Dict, Any, Awaitable, Callable
 from loader import db, dp
 from buttons import KeyboardManger
-from data import User, DataBase
+from data import User, DataBase, UserStatus
 from aiogram.dispatcher.event.bases import SkipHandler 
 from asyncio import Semaphore
 
@@ -23,8 +23,11 @@ class UserMiddleware(BaseMiddleware):
         tg_user: TGUser = data["event_from_user"]
         user = await self.db.get_user(tg_user.id)
         if user is None:
-            user = await register_user(self.db, tg_user, event)
-            
+            await register_user(self.db, tg_user, event)
+        
+        elif not user.is_active:
+            await self.db.update_user(user.id, status=UserStatus.active)
+
         return await handler(event, data)
 
 

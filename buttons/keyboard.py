@@ -120,6 +120,12 @@ class KeyboardManger:
             [KeyboardButton(text="✅ Xa"), KeyboardButton(text="❌ Yo'q")],
             [KeyboardButton(text = "⬅️ Orqaga")]
         ], resize_keyboard=True)
+    
+    def send_message() -> ReplyKeyboardMarkup:
+        return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text="🚀 Yuborish")],
+            [KeyboardButton(text="⬅️ Orqaga")]
+        ], resize_keyboard=True)
     def yes1():
         buttons = [KeyboardButton(text="Xa"), 
                    KeyboardButton(text="Yo'q"), 
@@ -147,7 +153,7 @@ class KeyboardManger:
                 [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
                 [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
                 [KeyboardButton(text=f"⏳ Vaxt: {button.display_time}"), KeyboardButton(text= "✅ Testlarni arlashtir" if button.mix_tests else "❌ Testlarni arlashtir")],
-                [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
+                # [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
                 [KeyboardButton(text="🗑 O'chirish")],
                 [KeyboardButton(text="⬅️ Orqaga")]
             ]
@@ -196,3 +202,14 @@ class KeyboardManger:
             [KeyboardButton(text="📖 Yordam kontenti")],
             [KeyboardButton(text="⬅️ Orqaga")]
         ], resize_keyboard=True)
+    
+
+    def chose_courses_for_ads(courses: list[Course]) -> ReplyKeyboardMarkup:
+        bt = AutoButtons(max_width = 3)
+        for course in courses:
+            if course.pro:
+                bt.add(KeyboardButton(text=course.name))
+            
+        bt.add(KeyboardButton(text="👥 Hammaga"))
+        bt.add(KeyboardButton(text="⬅️ Orqaga"), new_line=True)
+        return bt.reply_markup

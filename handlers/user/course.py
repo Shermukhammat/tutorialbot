@@ -70,7 +70,7 @@ async def course_menu_handler(update: types.Message, state: FSMContext):
                 await state.set_state(UserStates.in_test)
                 await state.update_data(manager = manager, poll_id = m.poll.id, course_button_id = button.id)
             else:
-                await update.answer_sticker('CAACAgIAAxkBAAIHbGiPFIlhq8G6gLcKvA-jWf1yz2kIAAL5AANWnb0KlWVuqyorGzY2BA')
+                # await update.answer_sticker('CAACAgIAAxkBAAIHbGiPFIlhq8G6gLcKvA-jWf1yz2kIAAL5AANWnb0KlWVuqyorGzY2BA')
                 await update.answer(f"{button.name} da hozirda birortaham test yo'q", reply_markup=KeyboardManger.course_menu(buttons, pro = course.pro)) 
             
     else:

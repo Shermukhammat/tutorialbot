@@ -22,7 +22,7 @@ class Settings(StatesGroup):
 
     add_chanel = State()
     remov_chanel = State()
-    
+
 
 
 class AdminCourseMneu(StatesGroup):
@@ -64,3 +64,12 @@ class AdminMedia(StatesGroup):
     get_media = State()
     rename = State()
     delete = State()
+
+
+class AdsMenu(StatesGroup):
+    chose_courses = State()
+    get_media = State()
+    wana_add_button = State()
+    get_button_name = State()
+    get_button_url = State()
+    confirm_send = State()
