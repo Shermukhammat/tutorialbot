@@ -151,3 +151,15 @@ async def help_command(update: types.Message):
                                message_id=db.HELP_CONTENT)
     else:
         await update.answer("⚡️ Yordam ma'lumoti tez orada yuklanadi")
+
+
+
+
+
+@dp.message(Command('stats'))
+async def statistic_command(update: types.Message):
+    user = await db.get_user(update.from_user.id)
+    if user.is_admin:
+        st = await db.get_statistic()
+        act = await db.get_dayly_activity()
+        await update.answer(f"📊 {db.bot.full_name} statistikasi \n\n🟢 Aktiv obunachilar: {st.activ_users} \n🚶 Tark etganlar: {st.lived_users} \n➕ Bugun {st.today_joined} ta foydalanuchi qo'shildi \n➕ Bu hafta {st.week_joined} ta foydalanuchi qo'shildi \n➕ Bu oy {st.month_joined} ta foydalanuchi qo'shildi \n🔥 Bugun botdan {act} ta odam foydalandi \n📚 Kurslar soni {st.courses_count} ta")

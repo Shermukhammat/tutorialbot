@@ -1,5 +1,8 @@
 from datetime import datetime, timedelta, timezone
+from pytz import timezone as pytz_timezone
 
+
+tz = pytz_timezone('Asia/Tashkent')
 
 def can_edit(message_date : datetime) -> bool:
     age = datetime.now(timezone.utc) - message_date
@@ -13,7 +16,7 @@ def get_expair_time(seconds : int) -> int:
 
 
 def get_next_day_sec() -> int:
-    now = datetime.now()
+    now = datetime.now(tz)
     tmorrow = (now + timedelta(days=1)).replace(hour=0, minute=0, second=0, microsecond=0) 
     left =  tmorrow - now
     return left.seconds
