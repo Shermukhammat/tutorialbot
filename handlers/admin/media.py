@@ -98,7 +98,7 @@ async def rename_button(update: types.Message, state: FSMContext):
             buttons = await db.get_course_buttons(course.id, use_cache=False)
             
             if update.text in [bt.name for bt in buttons]:
-                await update.answer(f"❗️ Bunday tugma mavjud", reply_markup=KeyboardManger.edit_course_button(button, pro=course.pro))
+                await update.answer(f"❗️ Bunday tugma mavjud", reply_markup=KeyboardManger.back())
             else:
                 await db.update_course_button(button.id, name = update.text)
                 await state.set_state(AdminMedia.main)

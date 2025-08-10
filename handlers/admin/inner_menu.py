@@ -1,5 +1,5 @@
 from aiogram import Router, Dispatcher, types, F
-from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock, AdminMedia, Settings, AdsMenu, AdminInnerMenu, AdminInnerTestBlock
+from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock, AdminMedia, Settings, AdsMenu, AdminInnerMenu, AdminInnerTestBlock, AdminInnerMedia
 from loader import db, dp, bot
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
@@ -75,7 +75,9 @@ async def inner_menu_editor(update: types.Message, state: FSMContext):
                 await state.update_data(inner_button_id = inner_button.id)
                 await update.answer(f"{inner_button.name} test blog", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro = course.pro))
             else:
-                await update.answer("Bu media tugma", reply_markup=replay_markup)
+                await state.set_state(AdminInnerMedia.main)
+                await state.update_data(inner_button_id = inner_button.id)
+                await update.answer(f"Media tugma: {inner_button.name}", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro = course.pro))
         else:
             await update.answer("❗️ Nomalum buyruq", reply_markup=replay_markup)
 

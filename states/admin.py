@@ -95,3 +95,10 @@ class AdminInnerTestBlock(StatesGroup):
     edit_time = State()
 
     delete = State()
+
+
+class AdminInnerMedia(StatesGroup):
+    main = State()
+    get_media = State()
+    rename = State()
+    delete = State()
