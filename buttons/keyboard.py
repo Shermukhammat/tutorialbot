@@ -1,5 +1,5 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, KeyboardButtonPollType
-from data import Course, CourseButton, CourseButtonType, Subscription
+from data import Course, CourseButton, CourseButtonType, Subscription, CourseInnerButton
 import random
 
 class AutoButtons:
@@ -105,8 +105,9 @@ class KeyboardManger:
 
         buttons.add(KeyboardButton(text = "➕ Test blok"), new_line = True)
         buttons.add(KeyboardButton(text = "➕ Media"))
+        buttons.add(KeyboardButton(text = "➕ Menyu"))
         if pro:
-            buttons.add(KeyboardButton(text = "➕ Foydalnuvchi"))
+            buttons.add(KeyboardButton(text = "➕ Foydalnuvchi"), new_line=True)
 
             buttons.add(KeyboardButton(text="🎓 Foydalnuvchilar"), new_line=True)
             buttons.add(KeyboardButton(text = "🧹 Foydalnuvchilarni tozlash"))
@@ -170,6 +171,23 @@ class KeyboardManger:
             keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
             return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
         
+    
+    def edit_inner_menu(inner_buttons: list [CourseInnerButton], button: CourseInnerButton, pro: bool=False) -> ReplyKeyboardMarkup:
+        bt = AutoButtons(max_height=5)
+        for inner_button in inner_buttons:
+            bt.add(KeyboardButton(text=inner_button.name), new_line=inner_button.new_line)
+
+        bt.add(KeyboardButton(text="➕ test blok"), new_line=True)
+        bt.add(KeyboardButton(text="➕ media"))
+        bt.add(KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), new_line=True)
+        bt.add(KeyboardButton(text="✏️ Nomi"))
+        bt.add(KeyboardButton(text="🗑 O'chirish"), new_line=True)
+        bt.add(KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")) if pro else None
+        bt.add(KeyboardButton(text="⬅️ Orqaga"), new_line=True)
+        return bt.reply_markup
+    
+
+            
 
     def course_menu(buttons: list[CourseButton], pro : bool = False, subscribed: bool = False) -> ReplyKeyboardMarkup:
         bt = AutoButtons()

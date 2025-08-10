@@ -73,3 +73,13 @@ class AdsMenu(StatesGroup):
     get_button_name = State()
     get_button_url = State()
     confirm_send = State()
+
+
+
+class AdminInnerMenu(StatesGroup):
+    main = State()
+    update_name = State()
+    delete1 = State()
+    delete2 = State()
+
+    add_button = State()

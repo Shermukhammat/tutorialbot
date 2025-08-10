@@ -79,8 +79,3 @@ async def course_menu_handler(update: types.Message, state: FSMContext):
         else:
             await update.answer(f"{course.name} kursi", reply_markup=KeyboardManger.course_menu(buttons, pro = course.pro)) 
 
-
-
-
-async def send_mdia(update: types.Message, state: FSMContext):
-    pass

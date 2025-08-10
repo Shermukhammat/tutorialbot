@@ -1,1 +1,1 @@
-from . import settings, main, courses, course_buttons, testblock, media, ads_sender
+from . import settings, main, courses, course_buttons, testblock, media, ads_sender, inner_menu
