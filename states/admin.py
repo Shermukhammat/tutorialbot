@@ -83,3 +83,15 @@ class AdminInnerMenu(StatesGroup):
     delete2 = State()
 
     add_button = State()
+
+
+
+class AdminInnerTestBlock(StatesGroup):
+    main = State()
+    get_test = State()
+    edit_test = State()
+
+    edit_name = State()
+    edit_time = State()
+
+    delete = State()

@@ -91,7 +91,7 @@ class CourseButton:
         return str(self.time) if self.time else '♾️'
 
 class Test:
-    def __init__(self, id: int = None, courses_button: int = None, question: str = None, media: int = None, options: list[str] = None, info: str = None):
+    def __init__(self, id: int = None, courses_button: int = None, question: str = None, media: int = None, options: list[str] = None, info: str = None, inner_button: int = None):
         self.id = id
         self.courses_button = courses_button
         self.question = question
@@ -101,6 +101,7 @@ class Test:
         self.mixsed_options = random.sample(self.options, len(self.options))
         self.number = None
         self.tests_leng = None
+        self.inner_button = inner_button
 
     def display_question(self, time_left: str | None = None) -> str:
         if self.question_long:
@@ -210,6 +211,9 @@ class CoursesManager(ABC):
                                options TEXT[],
                                info TEXT
                                ); """)
+            await conn.execute(""" ALTER TABLE tests ADD COLUMN IF NOT EXISTS inner_button INTEGER REFERENCES course_inner_buttons(id) ON DELETE CASCADE; """)
+
+
             await conn.execute(""" CREATE TABLE IF NOT EXISTS lessons (
                                id SERIAL PRIMARY KEY,
                                courses_button INTEGER REFERENCES course_buttons(id) ON DELETE CASCADE,
@@ -415,20 +419,25 @@ class CoursesManager(ABC):
             row = await conn.fetchrow(""" SELECT * FROM tests WHERE id = $1;""", id)
         
         if row:
-            return Test(id=row['id'], courses_button=row['courses_button'], question=row['question'], media=row['media'], options=row['options'], info=row['info'])
+            return Test(id=row['id'], courses_button=row['courses_button'], question=row['question'], media=row['media'], options=row['options'], info=row['info'], inner_button=row['inner_button'])
 
     async def add_test(self, test : Test):
         async with self.pool.acquire() as conn:
             conn : Connection
-            await conn.execute(""" INSERT INTO tests (courses_button, question, media, options, info) VALUES ($1, $2, $3, $4, $5);""", 
-                               test.courses_button, test.question, test.media, test.options, test.info)
+            await conn.execute(""" INSERT INTO tests (courses_button, question, media, options, info, inner_button) VALUES ($1, $2, $3, $4, $5, $6);""", 
+                               test.courses_button, test.question, test.media, test.options, test.info, test.inner_button)
         
-    async def get_tests(self, course_button_id : int = None) -> list[Test]:
+    async def get_tests(self, course_button_id : int = None, inner_button : int = None) -> list[Test]:
         async with self.pool.acquire() as conn:
             conn : Connection
-            rows = await conn.fetch(""" SELECT * FROM tests WHERE courses_button = $1;""", course_button_id)
-        
-        return [Test(id=row['id'], courses_button=row['courses_button'], question=row['question'], media=row['media'], options=row['options'], info=row['info']) for row in rows]
+            if course_button_id:
+                rows = await conn.fetch(""" SELECT * FROM tests WHERE courses_button = $1;""", course_button_id)
+            elif inner_button:
+                rows = await conn.fetch(""" SELECT * FROM tests WHERE inner_button = $1;""", inner_button)
+            else:
+                raise ValueError("CourseManager.get_tests: course_button_id or inner_button must be provided")
+
+        return [Test(id=row['id'], courses_button=row['courses_button'], question=row['question'], media=row['media'], options=row['options'], info=row['info'], inner_button=row['inner_button']) for row in rows]
 
     async def delete_test(self, id: int):
         async with self.pool.acquire() as conn:

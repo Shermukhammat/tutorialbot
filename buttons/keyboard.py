@@ -148,7 +148,7 @@ class KeyboardManger:
         keyboard.append([KeyboardButton(text="⬅️ Orqaga")])
         return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True) 
     
-    def edit_course_button(button: CourseButton, pro : bool = False) -> ReplyKeyboardMarkup:
+    def edit_inner_button(button: CourseInnerButton, pro : bool = False) -> ReplyKeyboardMarkup:
         if button.type == CourseButtonType.TEST:
             keyboard=[
                 [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
@@ -170,10 +170,32 @@ class KeyboardManger:
             ]
             keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
             return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
+
+    def edit_course_button(button: CourseButton, pro : bool = False) -> ReplyKeyboardMarkup:
+        if button.type == CourseButtonType.TEST:
+            keyboard=[
+                [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
+                [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
+                [KeyboardButton(text=f"⏳ Vaxt: {button.display_time}"), KeyboardButton(text= "✅ Testlarni arlashtir" if button.mix_tests else "❌ Testlarni arlashtir")],
+                # [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
+                [KeyboardButton(text="🗑 O'chirish")],
+                [KeyboardButton(text="⬅️ Orqaga")]
+            ]
+            keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
+            return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True)
         
+        elif button.type == CourseButtonType.MEDIA:
+            keyboard=[
+                [KeyboardButton(text="🔄 Mediani yangilash"), KeyboardButton(text="📁 Media")],
+                [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
+                [KeyboardButton(text="🗑 O'chirish")],
+                [KeyboardButton(text="⬅️ Orqaga")]
+            ]
+            keyboard[-2] += [KeyboardButton(text="🔓 Ochiq" if button.open else "🔒 Yopiq")] if pro else []
+            return ReplyKeyboardMarkup(keyboard=keyboard, resize_keyboard=True) 
     
     def edit_inner_menu(inner_buttons: list [CourseInnerButton], button: CourseInnerButton, pro: bool=False) -> ReplyKeyboardMarkup:
-        bt = AutoButtons(max_height=5)
+        bt = AutoButtons()
         for inner_button in inner_buttons:
             bt.add(KeyboardButton(text=inner_button.name), new_line=inner_button.new_line)
 

@@ -1,5 +1,5 @@
 from aiogram import Router, Dispatcher, types, F
-from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock, AdminMedia, Settings, AdsMenu, AdminInnerMenu
+from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock, AdminMedia, Settings, AdsMenu, AdminInnerMenu, AdminInnerTestBlock
 from loader import db, dp, bot
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
@@ -67,8 +67,17 @@ async def inner_menu_editor(update: types.Message, state: FSMContext):
         await state.update_data(type = 'media')
         await update.answer("Media tugma nomini kirting", reply_markup=KeyboardManger.back())
 
-    else:        
-        await update.answer("❗️ Nomalum buyruq", reply_markup=replay_markup)
+    else:
+        inner_button = await db.get_course_inner_button(name=update.text, course_button=button.id)
+        if inner_button:
+            if inner_button.type == CourseButtonType.TEST:
+                await state.set_state(AdminInnerTestBlock.main)
+                await state.update_data(inner_button_id = inner_button.id)
+                await update.answer(f"{inner_button.name} test blog", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro = course.pro))
+            else:
+                await update.answer("Bu media tugma", reply_markup=replay_markup)
+        else:
+            await update.answer("❗️ Nomalum buyruq", reply_markup=replay_markup)
 
 
 @r.message(AdminInnerMenu.update_name)
@@ -157,7 +166,7 @@ async def add_inner_button(update: types.Message, state: FSMContext):
             inner_button = CourseInnerButton(name=update.text,
                                              course=button.course, 
                                              course_button=button.id, 
-                                             type=CourseButtonType.INNER_MENU if type == 'test' else CourseButtonType.MEDIA)
+                                             type=CourseButtonType.TEST if type == 'test' else CourseButtonType.MEDIA)
             
             await db.add_course_inner_button(inner_button)
             inner_buttons = await db.get_course_inner_buttons(button.id)
