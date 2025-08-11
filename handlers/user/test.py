@@ -90,7 +90,7 @@ async def poll_answer_handler(answer: types.PollAnswer, state: FSMContext):
                                 protect_content=db.PROTECT_CONTENT,
                                 explanation=test.info,
                                 reply_markup=KeyboardManger.test_buttons(manager.tests_leng))
-    await state.update_data(manager = manager, poll_id = m.poll.id)
+    await state.update_data(manager = manager, message_id = m.message_id, poll_id = m.poll.id)
 
 
 
@@ -99,6 +99,7 @@ async def skip_test(update: types.Message, state: FSMContext):
     async with sema:
         data = await state.get_data()
         manager: TestManager = data['manager']
+        message_id = data.get('message_id')
 
         if manager.time_is_up:
             await test_finished(update.from_user.id, state)
@@ -106,6 +107,11 @@ async def skip_test(update: types.Message, state: FSMContext):
         
         test = manager.skip_test()
         if test:
+            try:
+                await bot.delete_message(chat_id=update.from_user.id, message_id=message_id)
+            except:
+                pass
+
             if test.question_long:
                 text=f", {manager.time_left} min]" if manager.time else ']'
                 await update.answer(f"[{test.number}/{test.tests_leng}"+text, )
@@ -124,7 +130,7 @@ async def skip_test(update: types.Message, state: FSMContext):
                                          explanation=test.info,
                                          is_anonymous=False,
                                          reply_markup=KeyboardManger.test_buttons(manager.tests_leng))
-            await state.update_data(manager = manager, poll_id = m.poll.id)
+            await state.update_data(manager = manager, message_id = m.message_id, poll_id = m.poll.id)
 
         else:
             await update.answer("❗️ Boshqa test yo'q", reply_markup=KeyboardManger.test_buttons(manager.tests_leng))
