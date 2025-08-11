@@ -234,6 +234,17 @@ class KeyboardManger:
         bt.add(KeyboardButton(text="⬅️ Orqaga"), new_line=True)
         return bt.reply_markup
     
+    def inner_menu(buttons: list[CourseInnerButton], pro : bool = False, subscribed: bool = False) -> ReplyKeyboardMarkup:
+        bt = AutoButtons()
+        # print('subscribed:', subscribed, 'pro:', pro)
+        for button in buttons:
+            if pro and not subscribed:
+                bt.add(KeyboardButton(text=f"{'' if button.open else '🔒 '}{button.name}"), new_line=button.new_line)
+            else:
+                bt.add(KeyboardButton(text=f"{button.name}"), new_line=button.new_line)
+
+        bt.add(KeyboardButton(text="⬅️ Orqaga"), new_line=True)
+        return bt.reply_markup
 
     def request_phone_number(back : bool = False) -> ReplyKeyboardMarkup:
         if back:

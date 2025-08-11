@@ -31,7 +31,7 @@ class TestManager:
             return self.current_test
         
     def skip_test(self) -> Test:
-        if self.current_test and self.tests_leng >= 2:
+        if self.current_test and self.tests_leng >= 1:
             self.tests.append(self.current_test)
             self.current_test = self.tests.pop(0)
             return self.current_test
