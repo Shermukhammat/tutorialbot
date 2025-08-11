@@ -58,6 +58,8 @@ class AdminTestBlock(StatesGroup):
     edit_time = State()
     delete = State()
 
+    update_test_media = State()
+
 
 class AdminMedia(StatesGroup):
     main = State()
@@ -95,6 +97,7 @@ class AdminInnerTestBlock(StatesGroup):
     edit_time = State()
 
     delete = State()
+    update_test_media = State()
 
 
 class AdminInnerMedia(StatesGroup):

@@ -1,6 +1,6 @@
 from aiogram import Router, Dispatcher, types, F
 from states import AdminPanel, AdminCourseMneu, AdminCourseButton, AdminTestBlock, AdminInnerTestBlock, AdminInnerMenu
-from loader import db, dp
+from loader import db, dp, bot
 from buttons import KeyboardManger, InlineKeyboardManager
 from aiogram.fsm.context import FSMContext
 from asyncio import Semaphore
@@ -97,6 +97,18 @@ async def edit_test_block(update : types.Message, state: FSMContext):
         await state.set_state(AdminInnerTestBlock.delete)
         await update.answer("☠️")
         await update.answer(f"{inner_button.name} test blogni o'chirmoqchimisi?", reply_markup=KeyboardManger.yes_or_no())
+
+    elif update.text == "🎞 Video yechim":
+        if inner_button.media:
+            await update.answer("Video yechimlar 👇", 
+                                reply_markup=InlineKeyboardManager.update_button('update_test_media'))
+            await bot.copy_messages(chat_id=update.from_user.id,
+                                    message_ids=inner_button.media,
+                                    from_chat_id=db.DATA_CHANEL_ID)
+            
+        else:
+            await update.answer("🤷🏻‍♂️ Video yechim qo'shilmagan", 
+                                reply_markup=InlineKeyboardManager.update_button('update_test_media'))
 
     else:
         await update.answer(f"Test blog: {inner_button.name}", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro=course.pro))
@@ -326,6 +338,13 @@ async def show_test(update: types.CallbackQuery, state: FSMContext):
                                      reply_markup=InlineKeyboardManager.test_edit_button(test, next=next, prev=prev))
 
 
+@r.callback_query(AdminInnerTestBlock.main, F.data.startswith('update_test_media'))
+async def stat_updating_test_media(update: types.CallbackQuery, state: FSMContext):
+    await state.set_state(AdminInnerTestBlock.update_test_media)
+    await state.update_data(media = [])
+    await update.message.answer("⬆️ Yangi video yechimlarni yuklang",
+                                reply_markup=KeyboardManger.media_saver2(save=False))
+
 @r.message(AdminInnerTestBlock.get_test, F.content_type.in_(
         {ContentType.PHOTO, ContentType.VOICE, ContentType.AUDIO, ContentType.VIDEO, ContentType.TEXT}
     ))
@@ -337,7 +356,7 @@ async def get_test(update : types.Message, state: FSMContext):
         inner_button = await db.get_course_inner_button(id = data['inner_button_id'])
 
         await state.set_state(AdminInnerTestBlock.main)
-        await update.answer(f"Test blogi: {button.name}", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro=course.pro))
+        await update.answer(f"Test blogi: {inner_button.name}", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro=course.pro))
     
     async with sema:
         current = await state.get_state()
@@ -386,3 +405,49 @@ async def get_test(update : types.Message, state: FSMContext):
                             reply_markup=KeyboardManger.make_quiz())
         await state.update_data(media = None)
 
+
+@r.message(AdminInnerTestBlock.update_test_media, F.content_type.in_({
+    ContentType.TEXT,
+    ContentType.VIDEO,
+    ContentType.DOCUMENT,
+    ContentType.PHOTO
+}))
+async def update_test_media(update: types.Message, state: FSMContext):
+    async with sema:
+        if await state.get_state() != AdminInnerTestBlock.update_test_media.state:
+            return
+        
+        data = await state.get_data()
+        course = await db.get_course(id = data['course_id'])
+        # button = await db.get_course_button(id = data['button_id'])
+        inner_button = await db.get_course_inner_button(id = data['inner_button_id'])
+        media = data.get('media', [])
+
+        if update.text == "⬅️ Orqaga":
+            await state.set_state(AdminInnerTestBlock.main)
+            await update.answer(f"Test blogi: {inner_button.name}", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro=course.pro))
+    
+        elif update.text == "✅ Saqlash":
+            if not media:
+                await update.answer("Kamida 1ta video yechim yuboring", reply_markup=KeyboardManger.media_saver2())
+                return
+            await db.update_course_inner_button(inner_button.id, media = media)
+            await state.set_state(AdminInnerTestBlock.main)
+            await update.answer(f"✅ Yangi video yechimlar saqlandi", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro=course.pro))
+
+        elif update.text == "🗑 Video yechimlarni o'chirish":
+            await db.update_course_inner_button(inner_button.id, media = [])
+            await state.set_state(AdminInnerTestBlock.main)
+            await update.answer(f"✅ Video yechimlar o'chirldi", reply_markup=KeyboardManger.edit_inner_button(inner_button, pro=course.pro))
+
+
+        elif len(media) <= 50:
+            m = await update.copy_to(db.DATA_CHANEL_ID)
+            media.append(m.message_id)
+            await state.update_data(media = media)
+            
+            if len(media) == 1:
+                await update.reply("Video yechimni saqlashingiz yoki yana 49ta media yuborishingiz mumkun", reply_markup=KeyboardManger.media_saver2(save = True))
+
+        else:
+            await update.answer("❗️ Video ychimlar soni 50tadan ko'p bo'lishi mumkun emas", reply_markup=KeyboardManger.media_saver2(save = True))

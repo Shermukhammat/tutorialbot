@@ -86,6 +86,17 @@ class KeyboardManger:
         ], resize_keyboard=True)
         return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text = "⬅️ Orqaga")]], resize_keyboard=True)
     
+
+    def media_saver2(save: bool = False) -> ReplyKeyboardMarkup:
+        if save:
+            return ReplyKeyboardMarkup(keyboard=[
+            [KeyboardButton(text = "✅ Saqlash")],
+            [KeyboardButton(text="🗑 Video yechimlarni o'chirish")],
+            [KeyboardButton(text = "⬅️ Orqaga")]
+        ], resize_keyboard=True)
+        return ReplyKeyboardMarkup(keyboard=[[KeyboardButton(text="🗑 Video yechimlarni o'chirish")], 
+                                             [KeyboardButton(text = "⬅️ Orqaga")]], resize_keyboard=True)
+    
     def time_button() -> ReplyKeyboardMarkup:
         return ReplyKeyboardMarkup(keyboard=[
             [KeyboardButton(text = "♾️ Vaxt belgilanmasin")],
@@ -154,7 +165,7 @@ class KeyboardManger:
                 [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
                 [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
                 [KeyboardButton(text=f"⏳ Vaxt: {button.display_time}"), KeyboardButton(text= "✅ Testlarni arlashtir" if button.mix_tests else "❌ Testlarni arlashtir")],
-                # [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
+                [KeyboardButton(text="🎞 Video yechim")],
                 [KeyboardButton(text="🗑 O'chirish")],
                 [KeyboardButton(text="⬅️ Orqaga")]
             ]
@@ -177,7 +188,7 @@ class KeyboardManger:
                 [KeyboardButton(text="➕ Test qo'shish"), KeyboardButton(text="📋 Testlar")],
                 [KeyboardButton(text="✅ Qator tashla" if button.new_line else "❌ Qator tashla"), KeyboardButton(text="✏️ Nomi")],
                 [KeyboardButton(text=f"⏳ Vaxt: {button.display_time}"), KeyboardButton(text= "✅ Testlarni arlashtir" if button.mix_tests else "❌ Testlarni arlashtir")],
-                # [KeyboardButton(text="✅ Varyantlarni arlashtir" if button.mix_options else "❌ Varyantlarni arlashtir")],
+                [KeyboardButton(text="🎞 Video yechim")],
                 [KeyboardButton(text="🗑 O'chirish")],
                 [KeyboardButton(text="⬅️ Orqaga")]
             ]
