@@ -40,9 +40,9 @@ class KeyboardManger:
         buttons = AutoButtons()
         for course in courses:
             if course.id in subs:
-                buttons.add(KeyboardButton(text=course.name), new_line = course.new_line)
-            elif course.pro:
                 buttons.add(KeyboardButton(text=f"👑 {course.name}"), new_line = course.new_line)
+            # elif course.pro:
+            #     buttons.add(KeyboardButton(text=course.name), new_line = course.new_line)
             else:
                 buttons.add(KeyboardButton(text=course.name), new_line = course.new_line)
 

@@ -33,6 +33,11 @@ async def test_finished(user_id: int, state: FSMContext):
             await bot.send_message(text='🎉', chat_id=user_id)
         else:
             await bot.send_message(text='🏁', chat_id=user_id)
+
+        if button.media:
+            await bot.copy_messages(chat_id=user_id,
+                                    message_ids=button.media,
+                                    from_chat_id=db.DATA_CHANEL_ID)
         text = f"🏁 {button.name} test tugadi \n🔢 Jami test: {manager.tests_leng_static} \n✅ To'g'ri: {manager.correct} \n❌ Xato: {manager.incorrect} \n📝 Ball to'pladingiz: {manager.correct_prestage}"
     else:
         await bot.send_message(text='⏳', chat_id=user_id)
